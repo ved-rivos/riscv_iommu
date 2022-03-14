@@ -1,0 +1,36 @@
+== Data Structures
+A data structure called device-context (DC) is used by the IOMMU to associate a device with
+an address space and to hold other per-device parameters used by IOMMU to perform address 
+translations. A radix-tree data structure called device directory table (DDT) traversed 
+using the `device_id` is used to hold the DC. 
+
+Two formats of the device-context structure are supported:
+
+* *Base Format* - A 32-byte DC used when MSI address translation and using MSI page table
+  and redirection of MSI to memory-resident interrupt files (MRIFs) is not supported. 
+
+* *Extended Format* - In the extended format a 64-byte device context is used and extends
+   the base device context with additional information for processing MSIs.
+
+DC associates the device, identified by `device_id`,  with an guest-physical-address space
+by providing a pointer to a second-stage page table and a virtual machine identifier called
+the guest soft-context ID (`GSCID`). 
+
+To support devices with multiple process contexts, the DC points to a radix-tree data 
+structure called the Process Directory Table (PDT) used to associate a process_id with a virtual
+address space. The PDT is used to hold the pointer to a first-stage page table for a `process_id`.
+
+The DDT may be configured to be a 1, 2, or 3 level radix table depending on the maximum width
+of the `device_id` supported. The partitioning of the `device_id` to obtain the device directory
+indexes (DDI) to traverse the DDT radix-tree table are as follows:
+
+.Figure Base format `device_id` partitioning
+
+[wavedrom, target="base-format-device-id-partitioning"]
+
+{reg: [
+    { bits: 7, name: `DDI[0]`},
+    { bits: 9, name: `DDI[1]`},
+    { bits: 9, name: `DDI[2]`},
+]}
+
