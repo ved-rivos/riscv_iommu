@@ -6,104 +6,103 @@ The IOMMU provides a memory-mapped programming interface. The memory-mapped
 registers of each IOMMU are located within a naturally aligned 4-KiB region 
 (a page) of physical address space. 
 
-
 .Table IOMMU Memory-mapped register layout
 [width=90%]
-[%header, cols="3,6,3, 20"]
+[%header, cols="3,8,3, 18"]
 |===
-|Offset|Name          |Size|Description
-|0     |capability    |8   |Capabilities supported by the IOMMU
-|8     |For custom use|8   |For custom use
-|16    |ddtp          |8   |Device directory table pointer
-|24    |cqb           |8   |Command-queue base address
-|32    |cqh           |4   |Command-queue head
-|36    |cqt           |4   |Command-queue tail
-|40    |fqb           |8   |Fault reporting queue base address
-|48    |fqh           |4   |Fault reporting queue head
-|52    |fqt           |4   |Fault reporting queue tail
-|56    |pqb           |8   |Page-request queue base address
-|64    |pqh           |4   |Page-requests queue head
-|68    |pqt           |4   |Page-request queue tail
-|72    |cqcsr         |4   |Command-queue control and status register
-|76    |fqcsr         |4   |Fault-queue control and status register
-|80    |pqcsr         |4   |Page-request queue control  and status register
-|84    |ipsr          |4   |Interrupt pending status register
-|88    |iocntovf      |4   |PMU overflow status register.
-|92    |iocntinh      |4   |PMU counter inhibit register
-|96    |iohpmcycles   |8   |IOMMU hardware-perf. monitoring cycles counter
-|104   |iohpmctr1 - 31|248 |IOMMU hardware-performance monitoring counters
-|352   |iohpmevt1 - 31|248 |IOMMU hardware-performance monitoring events
-|600   |iocntsec      |4   |Counters reserved for secure mode usage
-|604   |reserved      |78  |reserved
-|682   |For custom use|78  |Reserved for custom use
-|760   |icvec         |4   |Interrupt cause to vector register
-|768   |msi_tbl       |256 |MSI Table
+|Offset|Name            |Size|Description
+|0     |`capability`    |8   |Capabilities supported by the IOMMU
+|8     |For custom use  |8   |For custom use
+|16    |`ddtp`          |8   |Device directory table pointer
+|24    |`cqb`           |8   |Command-queue base address
+|32    |`cqh`           |4   |Command-queue head
+|36    |`cqt`           |4   |Command-queue tail
+|40    |`fqb`           |8   |Fault reporting queue base address
+|48    |`fqh`           |4   |Fault reporting queue head
+|52    |`fqt`           |4   |Fault reporting queue tail
+|56    |`pqb`           |8   |Page-request queue base address
+|64    |`pqh`           |4   |Page-requests queue head
+|68    |`pqt`           |4   |Page-request queue tail
+|72    |`cqcsr`         |4   |Command-queue control and status register
+|76    |`fqcsr`         |4   |Fault-queue control and status register
+|80    |`pqcsr`         |4   |Page-request queue control  and status register
+|84    |`ipsr`          |4   |Interrupt pending status register
+|88    |`iocntovf`      |4   |PMU overflow status register.
+|92    |`iocntinh`      |4   |PMU counter inhibit register
+|96    |`iohpmcycles`   |8   |IOMMU hardware-perf. monitoring cycles counter
+|104   |`iohpmctr1 - 31`|248 |IOMMU hardware-performance monitoring counters
+|352   |`iohpmevt1 - 31`|248 |IOMMU hardware-performance monitoring events
+|600   |`iocntsec`      |4   |Counters reserved for secure mode usage
+|604   |reserved        |78  |reserved
+|682   |For custom use  |78  |Reserved for custom use
+|760   |`icvec`         |4   |Interrupt cause to vector register
+|768   |`msi_tbl`       |256 |MSI Table
 |===
 
 
 === IOMMU capabilities
 daniel
 
-=== Device-directory table pointer (ddtp)
+=== Device-directory table pointer (`ddtp`)
 daniel
 
-=== Command-queue base (cqb)
+=== Command-queue base (`cqb`)
 rieul
 
-=== Command-queue head (cqh)
+=== Command-queue head (`cqh`)
 rieul
 
-=== Command-queue tail (cqt)
+=== Command-queue tail (`cqt`)
 rieul
 
-=== Fault-queue base (cqb)
+=== Fault-queue base (`fqb`)
 rieul
 
-=== Fault-queue head (cqh)
+=== Fault-queue head (`fqh`)
 rieul
 
-=== Fault-queue tail (cqt)
+=== Fault-queue tail (`fqt`)
 rieul
 
-=== Page-request-queue base (cqb)
+=== Page-request-queue base (`pqb`)
 rieul
 
-=== Page-request-queue head (cqh)
+=== Page-request-queue head (`pqh`)
 rieul
 
-=== Page-request-queue tail (cqt)
+=== Page-request-queue tail (`pqt`)
 rieul
 
-=== IOMMU performance monitoring counters (iohpmctr1-31)
+=== IOMMU performance monitoring counters (`iohpmctr1-31`)
 Perrine
 
-=== IOMMU performance monitoring cycles counters (iohpmcycles)
+=== IOMMU performance monitoring cycles counters (`iohpmcycles`)
 Perrine
 
-=== IOMMU performance monitoring event selection (iohpmevt1-31)
+=== IOMMU performance monitoring event selection (`iohpmevt1-31`)
 Perrine
 
-=== IOMMU performance monitoring counter overflow status (iocountovf)
+=== IOMMU performance monitoring counter overflow status (`iocountovf`)
 Perrine
 
-=== IOMMU performance monitoring counter inhibit (iocountinh)
+=== IOMMU performance monitoring counter inhibit (`iocountinh`)
 Perrine
 
-=== Interrupt pending status register (ipsr)
+=== Interrupt pending status register (`ipsr`)
 perrine
 
-=== Interrupt cause to vector register (icvec)
+=== Interrupt cause to vector register (`icvec`)
 perrine
 
-=== MSI table 
+=== MSI table (`msi_tbl`)
 IOMMU that supports MSI implements a MSI table that is indexed by the vector 
-from icvec to determine a MSI table entry. Each MSI table entry ‘x’ has three 
-registers msi_addr_x, msi_data_x, and msi_vec_ctrl_x. These registers are 
-hard wired to 0 if the IOMMU does not support MSI.
+from `icvec` to determine a MSI table entry. Each MSI table entry `x` has 
+three registers `msi_addr_x`, `msi_data_x`, and `msi_vec_ctrl_x`. These 
+registers are hard wired to 0 if the IOMMU does not support MSI.
 
-The msi_addr_x holds the 4-byte aligned MSI address for interrupt vector ‘x’.
+The `msi_addr_x` holds the 4-byte aligned MSI address for interrupt vector `x`.
 
-.msi_addr_x register fields
+.`msi_addr_x` register fields
 [wavedrom, , ]
 ....
 {reg: [
@@ -113,9 +112,9 @@ The msi_addr_x holds the 4-byte aligned MSI address for interrupt vector ‘x’
 ], config:{lanes: 2, hspace:1024, fontsize:12}}
 ....
 
-The msi_data_x holds the 4-byte MSI data for interrupt vector ‘x’.
+The `msi_data_x` holds the 4-byte MSI data for interrupt vector ‘x’.
 
-.msi_data_x register fields
+.`msi_data_x` register fields
 [wavedrom, , ]
 ....
 {reg: [
@@ -123,10 +122,10 @@ The msi_data_x holds the 4-byte MSI data for interrupt vector ‘x’.
 ], config:{lanes: 1, hspace:1024, fontsize:12}}
 ....
 
-The msi_vec_ctrl_x holds the per-vector mask bit - M. While a vector is masked,
-the IOMMU is prohibited from sending the associated message.
+The `msi_vec_ctrl_x` holds the per-vector mask bit - `M`. While a vector is 
+masked, the IOMMU is prohibited from sending the associated message.
 
-.msi_vec_ctrl_x register fields
+.`msi_vec_ctrl_x` register fields
 [wavedrom, , ]
 ....
 {reg: [
