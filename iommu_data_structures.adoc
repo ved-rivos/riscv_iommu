@@ -127,6 +127,33 @@ In extended-format the DC is 64-bytes.
 ], config:{lanes: 8, hspace: 1024}}
 ....
 
+The following diagrams illustrate the DDT radix-tree. The root device-directory
+page number is located using a memory-mapped control register called the 
+device-directory-table pointer (ddtp). Each non-leaf (NL) entry provides the 
+PPN of the next level device-directory-table page. The leaf device directory
+table entry holds the device-context (DC).
+
+.Three, two and single-level device directory
+["ditaa",shadows=false, separation=false, font=courier]
+....
+  +-------+-------+-------+      +-------+-------+   +-------+
+  |DDI[2] |DDI[1] |DDI[0] |      |DDI[1] |DDI[0] |   |DDI[0] |
+  +--+----+--+----+--+----+      +-+-----+-+-----+   +-+-----+
+     |       |       |             |       |           |
+     |  +--+ |  +--+ |  +--+       |  +--+ |  +--+     |   +--+
+     |  |  | |  |  | |  |  |       |  |  | |  |  |     |   |  |
+     |  |  | |  |  | |  +--+       |  |  | |  +--+     |   |  |
+     |  |  | |  |  | +->|DC|       |  |  | +->|DC|     |   |  |
+     |  |  | |  +--+    +--+       |  |  |    +--+     |   |  |
+     |  |  | +->|NL+-+  |  |       |  +--+    |  |     |   |  |
+     |  |  |    +--+ |  |  |       +->|NL+-+  |  |     |   +--+
+     +->+--+    |  | |  |  |          +--+ |  |  |     +-->|DC|
+        |NL+-+  |  | |  |  |          |  | |  |  |         +--+
+        +--+ |  |  | |  |  |          |  | |  |  |         |  |
+        |  | |  |  | |  |  |          |  | |  |  |         |  |
+ddtp--->+--+ +->+--+ +->+--+  ddtp--->+--+ +->+--+ ddtp--->+--+
+....
+
 ==== Device-context fields
 ===== Translation control (tc)
 
@@ -446,4 +473,31 @@ a unsupported transaction.
   {bits: 42, name: 'reserved', attr: '42'},
   {bits: 20, name: 'PSCID',    attr: '20'},
 ], config:{lanes: 4, hspace: 1024}}
+....
+
+The following diagrams illustrate the PDT radix-tree. The root 
+process-directory page number is located using the process-directory-table 
+pointer (pdtp) field of the device-context. Each non-leaf (NL) entry provides 
+the PPN of the next level process-directory-table page. The leaf
+process-directory table entry holds the process-context (PC).
+
+.Three, two and single-level process directory
+["ditaa",shadows=false, separation=false]
+....
+  +-------+-------+-------+      +-------+-------+   +-------+
+  |PDI[2] |PDI[1] |PDI[0] |      |PDI[1] |PDI[0] |   |PDI[0] |
+  +--+----+--+----+--+----+      +-+-----+-+-----+   +-+-----+
+     |       |       |             |       |           |
+     |  +--+ |  +--+ |  +--+       |  +--+ |  +--+     |   +--+
+     |  |  | |  |  | |  |  |       |  |  | |  |  |     |   |  |
+     |  |  | |  |  | |  +--+       |  |  | |  +--+     |   |  |
+     |  |  | |  |  | +->|PC|       |  |  | +->|PC|     |   |  |
+     |  |  | |  +--+    +--+       |  |  |    +--+     |   |  |
+     |  |  | +->|NL+-+  |  |       |  +--+    |  |     |   |  |
+     |  |  |    +--+ |  |  |       +->|NL+-+  |  |     |   +--+
+     +->+--+    |  | |  |  |          +--+ |  |  |     +-->|PC|
+        |NL+-+  |  | |  |  |          |  | |  |  |         +--+
+        +--+ |  |  | |  |  |          |  | |  |  |         |  |
+        |  | |  |  | |  |  |          |  | |  |  |         |  |
+pdtp--->+--+ +->+--+ +->+--+  pdtp--->+--+ +->+--+ pdtp--->+--+
 ....
