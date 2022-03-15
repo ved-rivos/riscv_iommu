@@ -1,0 +1,41 @@
+== Memory-mapped register interface
+
+=== Register layout
+
+=== IOMMU capabilities
+
+=== Device-directory table pointer (ddtp)
+
+=== Command-queue base (cqb)
+
+=== Command-queue head (cqh)
+
+=== Command-queue tail (cqt)
+
+=== Fault-queue base (cqb)
+
+=== Fault-queue head (cqh)
+
+=== Fault-queue tail (cqt)
+
+=== Page-request-queue base (cqb)
+
+=== Page-request-queue head (cqh)
+
+=== Page-request-queue tail (cqt)
+
+=== IOMMU performance monitoring counters (iohpmctr1-31)
+
+=== IOMMU performance monitoring cycles counters (iohpmcycles)
+
+=== IOMMU performance monitoring event selection (iohpmevt1-31)
+
+=== IOMMU performance monitoring counter overflow status (iocountovf)
+
+=== IOMMU performance monitoring counter inhibit (iocountinh)
+
+=== Interrupt pending status register (ipsr)
+
+=== Interrupt cause to vector register (icvec)
+
+=== MSI table 
