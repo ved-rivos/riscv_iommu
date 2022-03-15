@@ -1,41 +1,42 @@
 == Memory-mapped register interface
 
 === Register layout
-
+ved
 === IOMMU capabilities
-
+daniel
 === Device-directory table pointer (ddtp)
-
+daniel
 === Command-queue base (cqb)
-
+rieul
 === Command-queue head (cqh)
-
+rieul
 === Command-queue tail (cqt)
-
+rieul
 === Fault-queue base (cqb)
-
+rieul
 === Fault-queue head (cqh)
-
+rieul
 === Fault-queue tail (cqt)
-
+rieul
 === Page-request-queue base (cqb)
-
+rieul
 === Page-request-queue head (cqh)
-
+rieul
 === Page-request-queue tail (cqt)
-
+rieul
 === IOMMU performance monitoring counters (iohpmctr1-31)
-
+Perrine
 === IOMMU performance monitoring cycles counters (iohpmcycles)
-
+Perrine
 === IOMMU performance monitoring event selection (iohpmevt1-31)
-
+Perrine
 === IOMMU performance monitoring counter overflow status (iocountovf)
-
+Perrine
 === IOMMU performance monitoring counter inhibit (iocountinh)
-
+Perrine
 === Interrupt pending status register (ipsr)
-
+perrine
 === Interrupt cause to vector register (icvec)
-
+perrine
 === MSI table 
+ved
