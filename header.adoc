@@ -1,8 +1,8 @@
 [[header]]
 :description: RISC-V IOMMU Specification Document (Ziommu)
 :company: RISC-V.org
-:revdate: 1/2022
-:revnumber: 1.0
+:revdate: 3/2022
+:revnumber: 0.1
 :revremark: This document is in development. Assume everything can change. See http://riscv.org/spec-state for details.
 :url-riscv: http://riscv.org
 :doctype: book
@@ -37,7 +37,7 @@ endif::[]
 :xrefstyle: short
 
 = RISC-V IOMMU Specification Document (Ziommu)
-Ved Shanbhogue; Perrine Perrisse; RISC-V Task Group
+IOMMU Task Group
 
 // Preamble
 [WARNING]
