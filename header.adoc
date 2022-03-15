@@ -62,6 +62,7 @@ include::contributors.adoc[]
 
 include::intro.adoc[]
 include::iommu_data_structures.adoc[]
+include::iommu_in_memory_queues.adoc[]
 //the index must precede the bibliography
 include::index.adoc[]
 include::bibliography.adoc[]

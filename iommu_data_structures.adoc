@@ -38,7 +38,7 @@ radix-tree table are as follows:
   {bits: 7, name: 'DDI[0]'},
   {bits: 9, name: 'DDI[1]'},
   {bits: 8, name: 'DDI[2]'},
-], config:{lanes: 1, hspace:1024, fontsize: 10}}
+], config:{lanes: 1, hspace:1024}}
 ....
 
 .Extended format `device_id` partitioning
@@ -49,7 +49,7 @@ radix-tree table are as follows:
   {bits: 6, name: 'DDI[0]'},
   {bits: 9, name: 'DDI[1]'},
   {bits: 9, name: 'DDI[2]'},
-], config:{lanes: 1, hspace:1024, fontsize: 10}}
+], config:{lanes: 1, hspace:1024}}
 ....
 
 The PDT may be configured to be a 1, 2, or 3 level radix table depending on the
@@ -67,8 +67,14 @@ The partitioning of the process_id to obtain the process directory indices
   {bits: 8, name: 'PDI[0]'},
   {bits: 9, name: 'PDI[1]'},
   {bits: 3, name: 'PDI[2]'},
-], config:{lanes: 1, hspace:1024, fontsize: 10}}
+], config:{lanes: 1, hspace:1024}}
 ....
+
+[NOTE]
+====
+All RISC-V IOMMU implementations are required to support DDT and PDT located 
+in main memory. Supporting data structures in I/O memory not required.
+====
 
 === Device-Directory-Table (DDT)
 DDT is upto 3-level radix tree indexed using the device directory index (DDI) 
@@ -85,7 +91,7 @@ A valid (`V=1`) non-leaf DDT entry provides PPN of the next level DDT page.
   {bits: 11, name: 'reserved', attr: '11'},
   {bits: 44, name: 'PPN',      attr: '44'},
   {bits: 8,  name: 'reserved', attr: '8'},
-], config:{lanes: 2, hspace:1024, fontsize: 10}}
+], config:{lanes: 2, hspace:1024}}
 ....
 
 The leaf DDT page  is indexed by DDI[0] and holds the device-context (DC).
@@ -98,11 +104,10 @@ In base-format the DC is 32-bytes.
 ....
 {reg: [
   {bits: 64,  name: 'Translation Control (tc)'},
-  {bits: 64,  name: 'IO Hypervisor guest addr. translation and protection (iohgatp)'},
-  {bits: 64,  name: 'PDT pointer(pdtp)/I/O Supervisor/Virtual-Supervisor Address Translation and Protection(iosatp/iovsatp)'},
-  {bits: 44,  name: 'reserved'},
-  {bits: 20,  name: 'process-soft-context ID (PSCID)'},
-], config:{lanes: 4, hspace: 1024, fontsize: 10}}
+  {bits: 64,  name: 'IO Hyp. guest addr. translation and prot. (iohgatp)'},
+  {bits: 64,  name: 'First-stage-context (fsc)'},
+  {bits: 64,  name: 'reserved'},
+], config:{lanes: 4, hspace: 1024}}
 ....
 
 In extended-format the DC is 64-bytes.
@@ -114,13 +119,12 @@ In extended-format the DC is 64-bytes.
   {bits: 64,  name: 'Translation Control (tc)'},
   {bits: 64,  name: 'IO Hyp. guest addr. translation and prot. (iohgatp)'},
   {bits: 64,  name: 'First-stage-context (fsc)'},
-  {bits: 44,  name: 'reserved'},
-  {bits: 20,  name: 'Translation-attributes (ta)'},
+  {bits: 64,  name: 'Translation-attributes (ta)'},
   {bits: 64,  name: 'MSI-page-table pointer (msiptp)'},
   {bits: 64,  name: 'MSI-address-mask (msi_addr_mask)'},
   {bits: 64,  name: 'MSI-address-pattern (msi_addr_pattern)'},
   {bits: 64,  name: 'reserved'},
-], config:{lanes: 8, hspace: 1024, fontsize: 10}}
+], config:{lanes: 8, hspace: 1024}}
 ....
 
 ==== Device-context fields
@@ -245,7 +249,7 @@ guest physical addresses.
   {bits: 44, name: 'PPN'},
   {bits: 16, name: 'GSCID'},
   {bits: 4,  name: 'MODE'},
-], config:{lanes: 2, hspace: 640, fontsize: 10}}
+], config:{lanes: 2, hspace: 640}}
 ....
 
 The MODE field is used to select the second-stage address translation scheme.
@@ -283,7 +287,7 @@ page table.
   {bits: 44, name: 'PPN'},
   {bits: 16, name: 'reserved'},
   {bits: 4,  name: 'MODE'},
-], config:{lanes: 2, hspace: 640, fontsize: 10}}
+], config:{lanes: 2, hspace: 640}}
 ....
 
 The encodings of the iosatp/iovsatp MODE field are as the same as the encodings
@@ -306,8 +310,17 @@ PDT.
   {bits: 44, name: 'PPN'},
   {bits: 16, name: 'reserved'},
   {bits: 4,  name: 'MODE'},
-], config:{lanes: 2, hspace: 640, fontsize: 10}}
+], config:{lanes: 2, hspace: 640}}
 ....
+
+When two-stage address translation is active (iohgatp.MODE != Bare), the PPN 
+field hold a guest PPN.  The guest physical address of the PDT root page are 
+then converted by guest physical address translation, as controlled by the 
+iohgatp, into a supervisor physical address. Translating addresses of PDT root
+page through second-stage page tables, allows the PDT to be mapped into the 
+guest OS address space to allow the guest OS to directly edit the PDT to 
+associate a virtual-address space identified by a first-stage page table with
+a process_id.
 
 .Table Encoding of pdtp MODE field
 [width=75%]
@@ -336,7 +349,7 @@ PDT.
 {reg: [
   {bits: 44, name: 'reserved'},
   {bits: 20, name: 'PSCID'},
-], config:{lanes: 2, hspace: 640, fontsize: 10}}
+], config:{lanes: 2, hspace: 640}}
 ....
 
 The PSCID field of ta provides the process soft-context ID that identifies the
@@ -359,7 +372,7 @@ The MODE field is used to select the MSI address translation scheme.
   {bits: 44, name: 'PPN'},
   {bits: 16, name: 'reserved'},
   {bits: 4,  name: 'MODE'},
-], config:{lanes: 2, hspace: 640, fontsize: 10}}
+], config:{lanes: 2, hspace: 640}}
 ....
 
 .Table Encoding of msiptp MODE field
@@ -379,12 +392,58 @@ used to recognize certain memory writes from the device as being MSIs. The use
 of these fields is as specified in section 9.4 of the Advanced Interrupt 
 Architecture Specification.
 
-These fields are used to recognize memory writes as MSI if msiptp.MODED is not
-Bare.
 
+=== Process-Directory-Table (PDT)
 
+The PDT is a 1, 2, or 3-level radix tree indexed using the process directory 
+index (PDI) bits of the process_id. A valid (V==1) non-leaf PDT entry holds 
+the PPN of the next-level PDT page.
 
+.Non-leaf process-directory-table entry
 
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 1,  name: 'V',        attr: '1'},
+  {bits: 11, name: 'reserved', attr: '11'},
+  {bits: 44, name: 'PPN',      attr: '44'},
+  {bits: 8,  name: 'reserved', attr: '8'},
+], config:{lanes: 2, hspace:1024}}
+....
 
+The leaf PDT page  is indexed by PDI[0] and holds the 16-byte process-context 
+(PC).
 
+A valid (V=1) leaf PDT entry holds the PPN of the root page of a first-stage 
+page table and the MODE used to determine the first-stage address translation 
+scheme. The MODE field encodings are as defined for the MODE field in 
+satp/vsatp CSR.
 
+The software assigned process soft-context ID (PSCID) is used as the address 
+space ID of the process identified by the first-stage page table.
+
+When two-stage address translation is active (iohgatp.MODE != Bare), the PPN 
+field hold a guest PPN of the first-stage page table. When two-stage address 
+translation is active, addresses of the first-stage page table entries are 
+then converted by guest physical address translation, as controlled by the 
+iohgatp, into a supervisor physical address. A guest OS may thus directly edit
+the first-stage page table to limit access by the device to a subset of its memory and specify permissions for the device accesses.
+
+When enable-supervisory-access (ENSA) is 1, transactions requesting supervisor
+privilege are allowed with this process_id else the transaction is treated as 
+a unsupported transaction.
+
+.Process-context (PC)
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 44, name: 'PPN',      attr: '44'},
+  {bits: 16, name: 'reserved', attr: '16'},
+  {bits: 4,  name: 'MODE',     attr: '4'},
+  {bits: 1,  name: 'V',        attr: '1'},
+  {bits: 1,  name: 'ENSA',     attr: '1'},
+  {bits: 42, name: 'reserved', attr: '42'},
+  {bits: 20, name: 'PSCID',    attr: '20'},
+], config:{lanes: 4, hspace: 1024}}
+....
