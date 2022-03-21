@@ -119,6 +119,7 @@ fields may be used by the specific function invoked.
   {bits: 16, name: 'GSCID'},
   {bits: 8, name: 'rsvd'},
   {bits: 52, name: 'ADDR[63:12]'},
+  {bits: 12, name: 'rsvd'},
 ], config:{lanes: 4, hspace:1024, fontsize:12}}
 ....
 
@@ -347,6 +348,7 @@ command completion.
   {bits: 16, name: 'GSCID'},
   {bits: 8, name: 'rsvd'},
   {bits: 52, name: 'ADDR[63:12]'},
+  {bits: 12, name: 'rsvd'},
 ], config:{lanes: 4, hspace:1024, fontsize:12}}
 ....
 
