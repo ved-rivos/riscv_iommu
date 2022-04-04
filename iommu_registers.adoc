@@ -68,14 +68,12 @@ table.
 |80    |`pqcsr`         |4   |<<PQCSR, Page-request-queue control 
                                      and status register>>
 |84    |`ipsr`          |4   |<<IPSR, Interrupt pending status register>>
-|88    |`iocntovf`      |4   |<<OVF, PMU overflow status register.>>
-|92    |`iocntinh`      |4   |<<INH, PMU counter inhibit register>>
-|96    |`iohpmcycles`   |8   |<<CYC, IOMMU hardware-perf. monitoring 
-                                     cycles counter>>
-|104   |`iohpmctr1 - 31`|248 |<<CTR, IOMMU hardware-performance monitoring 
-                                     counters>>
-|352   |`iohpmevt1 - 31`|248 |<<EVT, IOMMU hardware-performance monitoring 
-                                     events>>
+|88    |`iocntovf`      |4   |<<OVF, Performance-monitoring counter 
+                                     overflow status>>
+|92    |`iocntinh`      |4   |<<INH, Performance-monitoring counter inhibits>>
+|96    |`iohpmcycles`   |8   |<<CYC, Performance-monitoring cycles counter>>
+|104   |`iohpmctr1 - 31`|248 |<<CTR, Performance-monitoring event counters>>
+|352   |`iohpmevt1 - 31`|248 |<<EVT, Performance-monitoring event selector>>
 |600   |`iocntsec`      |4   |<<SEC, Counters reserved for secure mode usage>>
 |604   |Reserved`       |78  |Reserved for future use (`WPRI`)
 |682   |Custom          |78  |Reserved for custom use (`WARL`)
@@ -878,23 +876,23 @@ status of the page-request-queue.
 perrine
 
 [[OVF]]
-=== IOMMU performance monitoring counter overflow status (`iocountovf`)
+=== Performance-monitoring counter overflow status (`iocountovf`)
 Perrine
 
 [[INH]]
-=== IOMMU performance monitoring counter inhibit (`iocountinh`)
+=== Performance-monitoring counter inhibits (`iocountinh`)
 Perrine
 
 [[CYC]]
-=== IOMMU performance monitoring cycles counters (`iohpmcycles`)
+=== Performance-monitoring cycles counter (`iohpmcycles`)
 Perrine
 
 [[CTR]]
-=== IOMMU performance monitoring counters (`iohpmctr1-31`)
+=== Performance-monitoring event counters (`iohpmctr1-31`)
 Perrine
 
 [[EVT]]
-=== IOMMU performance monitoring event selection (`iohpmevt1-31`)
+=== Performance-monitoring event selector (`iohpmevt1-31`)
 Perrine
 
 [[ICVEC]]
