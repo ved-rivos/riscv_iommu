@@ -17,4 +17,12 @@ build:
     $(HEADER_SOURCE)
 
 clean:
-	rm $(PDF_RESULT)
+	rm -rf $(PDF_RESULT)
+	rm -rf images/diag-*.png
+	rm -rf .asciidoctor/
+	rm -rf images/diagram-classes.svg
+	rm -rf images/example-3.svg
+	rm -rf images/graphviz/
+	rm -rf images/image-example.svg
+	rm -rf images/wavedrom/
+

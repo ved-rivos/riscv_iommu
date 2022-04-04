@@ -199,8 +199,8 @@ an IMSIC or to a memory-resident-interrupt-file and clear the `MSI` and
 ====
 
 [[DDTP]]
-=== Device-directory table pointer (`ddtp`)
-.Device-directory table pointer register fields
+=== Device-directory-table pointer (`ddtp`)
+.Device-directory-table pointer register fields
 [wavedrom, , ]
 ....
 {reg: [
@@ -249,12 +249,12 @@ an IMSIC or to a memory-resident-interrupt-file and clear the `MSI` and
                                                      protection. All inbound 
                                                      memory accesses are passed
                                                      through.
-                                !2      ! `1LVL`   ! One-level device-directory
-                                                     table
-                                !3      ! `2LVL`   ! Two-level device-directory
-                                                     table
+                                !2      ! `1LVL`   ! One-level 
+                                                     device-directory-table
+                                !3      ! `2LVL`   ! Two-level 
+                                                     device-directory-table
                                 !4      ! `3LVL`   ! Three-level 
-                                                     device-directory table
+                                                     device-directory-table
 !===
 |===
 
