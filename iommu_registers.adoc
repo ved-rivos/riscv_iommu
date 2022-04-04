@@ -13,9 +13,9 @@ otherwise in the register definition.
 Register fields are assigned one of the attributes described in following 
 table.
 
-.Table Register and Register bit-field types
+.Register and Register bit-field types
 [width=90%]
-[%header, cols="3, 10"]
+[%header, cols="^3, 10"]
 |===
 ^|Attribute    ^|                      Description
 | RW            | Read-Write - Register bits are read-write and are permitted 
@@ -46,46 +46,159 @@ table.
 
 === Register layout
 
-.Table IOMMU Memory-mapped register layout
+.IOMMU Memory-mapped register layout
 [width=90%]
-[%header, cols="3,8,3, 18"]
+[%header, cols="^3,6,^3, 18"]
 |===
 |Offset|Name            |Size|Description
-|0     |`capability`    |8   |Capabilities supported by the IOMMU
+|0     |`capability`    |8   |<<CAP, Capabilities supported by the IOMMU>>
 |8     |For custom use  |8   |For custom use
-|16    |`ddtp`          |8   |Device directory table pointer
+|16    |`ddtp`          |8   |<<DDTP, Device directory table pointer>>
 |24    |`cqb`           |8   |<<CQB, Command-queue base>>
-|32    |`cqh`           |4   |Command-queue head
-|36    |`cqt`           |4   |Command-queue tail
-|40    |`fqb`           |8   |Fault-queue base
-|48    |`fqh`           |4   |Fault-queue head
-|52    |`fqt`           |4   |Fault-queue tail
-|56    |`pqb`           |8   |Page-request-queue base
-|64    |`pqh`           |4   |Page-request-queue head
-|68    |`pqt`           |4   |Page-request-queue tail
-|72    |`cqcsr`         |4   |Command-queue control and status register
-|76    |`fqcsr`         |4   |Fault-queue control and status register
-|80    |`pqcsr`         |4   |Page-request-queue control and status register
-|84    |`ipsr`          |4   |Interrupt pending status register
-|88    |`iocntovf`      |4   |PMU overflow status register.
-|92    |`iocntinh`      |4   |PMU counter inhibit register
-|96    |`iohpmcycles`   |8   |IOMMU hardware-perf. monitoring cycles counter
-|104   |`iohpmctr1 - 31`|248 |IOMMU hardware-performance monitoring counters
-|352   |`iohpmevt1 - 31`|248 |IOMMU hardware-performance monitoring events
-|600   |`iocntsec`      |4   |Counters reserved for secure mode usage
-|604   |`WPRI`          |78  |Reserved for future use
-|682   |For custom use  |78  |Reserved for custom use
-|760   |`icvec`         |4   |Interrupt cause to vector register
-|768   |`msi_tbl`       |256 |MSI Table
-|1024  |`WPRI`          |3072|Reserved for future use
+|32    |`cqh`           |4   |<<CQH, Command-queue head>>
+|36    |`cqt`           |4   |<<CQT, Command-queue tail>>
+|40    |`fqb`           |8   |<<FQB, Fault-queue base>>
+|48    |`fqh`           |4   |<<FQH, Fault-queue head>>
+|52    |`fqt`           |4   |<<FQT, Fault-queue tail>>
+|56    |`pqb`           |8   |<<PQB, Page-request-queue base>>
+|64    |`pqh`           |4   |<<PQH, Page-request-queue head>>
+|68    |`pqt`           |4   |<<PQT, Page-request-queue tail>>
+|72    |`cqcsr`         |4   |<<CSR, Command-queue control and status register>>
+|76    |`fqcsr`         |4   |<<FQCSR, Fault-queue control and status register>>
+|80    |`pqcsr`         |4   |<<PQCSR, Page-request-queue control 
+                                     and status register>>
+|84    |`ipsr`          |4   |<<IPSR, Interrupt pending status register>>
+|88    |`iocntovf`      |4   |<<OVF, PMU overflow status register.>>
+|92    |`iocntinh`      |4   |<<INH, PMU counter inhibit register>>
+|96    |`iohpmcycles`   |8   |<<CYC, IOMMU hardware-perf. monitoring 
+                                     cycles counter>>
+|104   |`iohpmctr1 - 31`|248 |<<CTR, IOMMU hardware-performance monitoring 
+                                     counters>>
+|352   |`iohpmevt1 - 31`|248 |<<EVT, IOMMU hardware-performance monitoring 
+                                     events>>
+|600   |`iocntsec`      |4   |<<SEC, Counters reserved for secure mode usage>>
+|604   |Reserved`       |78  |Reserved for future use (`WPRI`)
+|682   |Custom          |78  |Reserved for custom use (`WARL`)
+|760   |`icvec`         |4   |<<ICVEC, Interrupt cause to vector register>>
+|768   |`msi_tbl`       |256 |<<MSI, MSI Table>>
+|1024  |Reserved        |3072|Reserved for future use (`WPRI`)
 |===
 
 
+[[CAP]]
 === IOMMU capabilities (`capabilities`)
-daniel
+
+The `capabilities` is a WARL read-write register reporting features supported
+by the IOMMU. Each field if not clear indicates presence of that feature in 
+the IOMMU. At reset, the register shall contain the maximal supported features.
+
+This register must be readable in any implementation. An implementation may 
+allow one or more fields in the register to be writeable to support enabling
+or disabling the feature corresponding to that field.
+
+If a `capabilities` field is writeable then the corresponding feature may be 
+enabled or disabled by updating that field. If a feature `x` depends on a 
+feature `y`, then attempting to enable feature `x` but disable feature `y` 
+results in both features being disabled.
+
+An implementation may impose additional constraints on the collective setting 
+of two or more `capabilities` fields, in which case they function collectively 
+as a single WARL field. An attempt to write an unsupported combination causes 
+those bits to be set to some supported combination.
+
+When software enables an feature that was previously disabled, then all state
+associated with that feature is `UNSPECIFIED`, unless otherwise specified by 
+that feature.
+
+When software enables or disables a feature when the IOMMU is not OFF 
+(i.e. `ddtp.MODE == Off`) then the IOMMU behavior is `UNSPECIFIED`.
+
+.capabilities register fields
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 8, name: 'version'},
+  {bits: 1, name: 'Sv32'},
+  {bits: 1, name: 'Sv39'},
+  {bits: 1, name: 'Sv48'},
+  {bits: 1, name: 'Sv57'},
+  {bits: 1, name: '4xSv32'},
+  {bits: 1, name: '4xSv39'},
+  {bits: 1, name: '4xSv48'},
+  {bits: 1, name: '4xSv57'},
+  {bits: 1, name: 'Svnapot'},
+  {bits: 1, name: 'Svpbmt'},
+  {bits: 1, name: 'MSI'},
+  {bits: 1, name: 'MSI_MRIF'},
+  {bits: 1, name: 'AMO'},
+  {bits: 1, name: 'ATS'},
+  {bits: 1, name: 'T2GPA'},
+  {bits: 1, name: 'END'},
+  {bits: 1, name: 'WIS'},
+  {bits: 1, name: 'PMON'},
+  {bits: 22, name: 'reserved'},
+  {bits: 16, name: 'custom'},
+], config:{lanes: 8, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="1,1,1,6"]
+|===
+|Bits  |Field      |Attribute | Description
+|7:0   |`version`  |RO        | The `version` field holds the version of the 
+                                specification implemented by the IOMMU. The low
+                                nibble is used to hold the minor version of the
+                                specification and the upper nibble is used to 
+                                hold the major version of the specification. 
+                                For example, an implementation that supports 
+                                version 1.0 of the specification reports 0x10.
+|8     |`Sv32`     |WARL      | Page-based 32-bit virtual-memory system
+|9     |`Sv39`     |WARL      | Page-based 39-bit virtual-memory system 
+|10    |`Sv48`     |WARL      | Page-based 48-bit virtual-memory system 
+|11    |`Sv57`     |WARL      | Page-based 57-bit virtual-memory system 
+|12    |`Sv32`     |WARL      | Page-based 34-bit virtual addressing (G-stage)
+|13    |`Sv39`     |WARL      | Page-based 39-bit virtual addressing (G-stage)
+|14    |`Sv48`     |WARL      | Page-based 48-bit virtual addressing (G-stage)
+|15    |`Sv57`     |WARL      | Page-based 57-bit virtual addressing (G-stage)
+|16    |`Svnapot`  |WARL      | NAPOT translation contiguity
+|17    |`Svpbmt`   |WARL      | Page-based memory types
+|18    |`MSI`      |WARL      | MSI address translation using Write-through 
+                                mode MSI PTE
+|19    |`MSI_MRIF` |WARL      | MSI address translation using MRIF mode MSI PTE
+|20    |`AMO`      |WARL      | Atomic updates to MRIF and PTE accessed (A) 
+                                and dirty (D) bit
+|21    |`ATS`      |WARL      | PCIe Address Translation Services (ATS) and 
+                                page-request interface (PRI)
+|22    |`T2GPA`    |WARL      | Returning guest-physical-address in ATS 
+                                translation completions.
+|23    |`END`      |WARL      | When 0, IOMMU accesses to memory resident data 
+                                structures (e.g. DDT, PDT, in-memory queues, 
+                                VS and G stage page tables) are performed as 
+                                little-endian accesses and when 1 as 
+                                big-endian accesses.
+|24    |`WIS`      |WARL      | IOMMU interrupts signaled as wired-interrupts
+|25    |`PMON`     |WARL      | IOMMU implements a performance-monitoring unit
+|47:26 |`reserved` |WPRI      | Reserved for standard use
+|63:48 |`custom`   |WARL      | Reserved for custom use
+|===
+
+[NOTE]
+====
+Hypervisor may provide an SW emulated IOMMU to allow the guest to manage 
+the VS-stage page tables for fine grained control on memory accessed by guest 
+controlled devices. 
+
+A hypervisor that provides such an emulated IOMMU to the guest may retain 
+control of the G-stage page tables and clear the `4xSv32`, `4xSv39`, `4xSv48`, 
+and `4xSv57` fields of the emulated `capabilities` register.
+
+A hypervisor that provides such an emulated IOMMU to the guest may retain 
+control of the MSI page tables used to direct MSI to guest interrupt files in 
+an IMSIC or to a memory-resident-interrupt-file and clear the `MSI` and 
+`MSI_MRIF` fields of the emulated `capabilities` register.
+====
 
 === Device-directory table pointer (`ddtp`)
-daniel
 
 [[CQB]]
 === Command-queue base (`cqb`)
@@ -104,7 +217,7 @@ and number of entries in the queue.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits  |Field      |Attribute | Description
 |4:0   |`LOG2SZ-1` |WARL     a| The `LOG2SZ-1` field holds the number of 
@@ -124,6 +237,7 @@ and number of entries in the queue.
 |63:49 |`WPRI`     |WPRI      | Reserved
 |===
 
+[[CQH]]
 === Command-queue head (`cqh`)
 
 This 32-bits register (RO) holds the index into the command-queue where 
@@ -138,13 +252,14 @@ the IOMMU will fetch the next instruction.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits |Field   |Attribute | Description
 |31:0 |`index` |RO        | Holds the `index` into the command-queue from where
                             the next command will be fetched next by the IOMMU.
 |===
 
+[[CQT]]
 === Command-queue tail (`cqt`)
 
 This 32-bits register (RW) holds the index into the command-queue where 
@@ -159,7 +274,7 @@ the software queues the next command for the IOMMU.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits |Field   |Attribute | Description
 |31:0 |`index` |WARL      | Holds the `index` into the command-queue where 
@@ -168,6 +283,176 @@ the software queues the next command for the IOMMU.
                             in enabled state (i.e., `cqsr.cqon == 1`).
 |===
 
+[[FQB]]
+=== Fault queue base (`fqb`)
+
+This 64-bits register (RW) holds the PPN of the root page of the fault-queue
+and number of entries in the queue.
+
+.Fault queue base register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 5, name: 'LOG2SZ-1'},
+  {bits: 44, name: 'PPN'},
+  {bits: 15, name: 'WPRI'},
+], config:{lanes: 2, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits  |Field     |Attribute | Description
+|4:0   |`LOG2SZ-1`|WARL     a| The `LOG2SZ-1` field holds the number of 
+                               entries in fault-queue as a log-to-base-2 
+                               minus 1. A value of 0 indicates a queue of 2 
+                               entries. Each fault record is 64-bytes. 
+                               If the fault-queue has 64 or fewer entries then 
+                               the base address of the queue is always aligned 
+                               to 4-KiB. If the fault-queue has more than 64 
+                               entries then the fault-queue base address must 
+                               be naturally aligned to `2^LOG2SZ^ x 64`.
+|48:5  |`PPN`     |WARL      | Holds the `PPN` of the root page of the 
+                               in-memory fault-queue used by IOMMU to queue 
+                               fault record.
+|63:49 |`WPRI`    |WPRI      | Reserved
+|===
+
+[[FQH]]
+=== Fault queue head (`fqh`)
+
+This 32-bits register (RW) hodlds the index into fault-queue where the
+software will fetch the next fault reccord.
+
+.Fault queue head register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 32, name: 'index'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits |Field   |Attribute |Description
+|31:0 |`index` |WARL      | Holds the `index` into the fault-queue from which 
+                            software reads the next fault record.  Only 
+                            `LOG2SZ:0` bits are writeable when the queue is 
+                            in enabled state (i.e., `fqsr.fqon == 1`).
+|===
+
+[[FQT]]
+=== Fault queue tail (`fqt`)
+
+This 32-bits register (RO) holds the index into the fault-queue where the
+IOMMU queues the next fault record.
+
+.Fault queue tail register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 32, name: 'index'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits |Field   |Attribute | Description
+|31:0 |`index` |RO        | Holds the `index` into the fault-queue where IOMMU 
+                            writes the next fault record.
+|===
+
+[[PQB]]
+=== Page-request-queue base (`pqb`)
+
+This 64-bits register (RW) holds the PPN of the root page of the 
+page-request-queue and number of entries in the queue.
+
+.Page-Request-queue base register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 5, name: 'LOG2SZ-1'},
+  {bits: 44, name: 'PPN'},
+  {bits: 15, name: 'WPRI'},
+], config:{lanes: 2, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits  |Field     |Attribute | Description
+|4:0   |`LOG2SZ-1`|WARL      | The `LOG2SZ-1` field holds the number of entries 
+                               in page-request-queue as a log-to-base-2 minus 1.
+                               A value of 0 indicates a queue of 2 entries. 
+                               Each page-request is 16-bytes. If the 
+                               page-request-queue has 256 or fewer entries 
+                               then the base address of the queue is always 
+                               aligned to 4-KiB.
+                               If the page-request-queue has more than 256 
+                               entries then the page-request-queue base address
+                               must be naturally aligned to `2^LOG2SZ^ x 16`.
+|48:5  |`PPN`     |WARL      | Holds the `PPN` of the root page of the 
+                               in-memory page-request-queue used by IOMMU to 
+                               queue page requests.
+|63:49 |`WPRI`    |WPRI      | Reserved
+|===
+
+[[PQH]]
+=== Page-request-queue head (`pqh`)
+
+This 32-bits register (RW) holds the index into the page-request-queue where
+software will fetch the next page-request.
+
+.Page-request-queue head register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 32, name: 'index'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits |Field   |Attribute | Description
+|31:0 |`index` |WARL      | Holds the `index` into the page-request-queue from 
+                            which software reads the next page request.  Only 
+                            `LOG2SZ:0` bits are writeable when the queue is 
+                            inenabled state (i.e., `pqsr.pqon == 1`).
+|===
+
+[[PQT]]
+=== Page-request-queue tail (`pqt`)
+
+This 32-bits register (RO) holds the index into the page-request-queue 
+where the IOMMU writes the next page-request.
+
+.Page-request-queue tail register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 32, name: 'index'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits |Field   |Attribute | Description
+|31:0 |`index` |RO        | Holds the `index` into the page-request-queue 
+                            where IOMMU writes the next page request.
+|===
+
+[[CSR]]
 === Command-queue CSR (`cqcsr`)
 
 This 32-bits register (RW) is used to control the operations and report the
@@ -193,7 +478,7 @@ status of the command-queue.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits |Field   |Attribute | Description
 |0    |`cqen`  |RO        | The command-queue-enable bit enables the command-
@@ -289,87 +574,7 @@ to wait for all previous commands to be committed, if so desired, before
 turning off the command-queue.
 ====
 
-=== Fault queue base (`fqb`)
-
-This 64-bits register (RW) holds the PPN of the root page of the fault-queue
-and number of entries in the queue.
-
-.Fault queue base register fields
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 5, name: 'LOG2SZ-1'},
-  {bits: 44, name: 'PPN'},
-  {bits: 15, name: 'WPRI'},
-], config:{lanes: 2, hspace:1024}}
-....
-
-[width=100%]
-[%header, cols="1,1,1,6"]
-|===
-|Bits  |Field     |Attribute | Description
-|4:0   |`LOG2SZ-1`|WARL     a| The `LOG2SZ-1` field holds the number of 
-                               entries in fault-queue as a log-to-base-2 
-                               minus 1. A value of 0 indicates a queue of 2 
-                               entries. Each fault record is 64-bytes. 
-                               If the fault-queue has 64 or fewer entries then 
-                               the base address of the queue is always aligned 
-                               to 4-KiB. If the fault-queue has more than 64 
-                               entries then the fault-queue base address must 
-                               be naturally aligned to `2^LOG2SZ^ x 64`.
-|48:5  |`PPN`     |WARL      | Holds the `PPN` of the root page of the 
-                               in-memory fault-queue used by IOMMU to queue 
-                               fault record.
-|63:49 |`WPRI`    |WPRI      | Reserved
-|===
-
-=== Fault queue head (`fqh`)
-
-This 32-bits register (RW) hodlds the index into fault-queue where the
-software will fetch the next fault reccord.
-
-.Fault queue head register fields
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 32, name: 'index'},
-], config:{lanes: 1, hspace:1024}}
-....
-
-[width=100%]
-[%header, cols="1,1,1,6"]
-|===
-|Bits |Field   |Attribute |Description
-|31:0 |`index` |WARL      | Holds the `index` into the fault-queue from which 
-                            software reads the next fault record.  Only 
-                            `LOG2SZ:0` bits are writeable when the queue is 
-                            in enabled state (i.e., `fqsr.fqon == 1`).
-|===
-
-=== Fault queue tail (`fqt`)
-
-This 32-bits register (RO) holds the index into the fault-queue where the
-IOMMU queues the next fault record.
-
-.Fault queue tail register fields
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 32, name: 'index'},
-], config:{lanes: 1, hspace:1024}}
-....
-
-[width=100%]
-[%header, cols="1,1,1,6"]
-|===
-|Bits |Field   |Attribute | Description
-|31:0 |`index` |RO        | Holds the `index` into the fault-queue where IOMMU 
-                            writes the next fault record.
-|===
-
+[[FQCSR]]
 === Fault queue CSR (`fqcsr`)
 
 This 32-bits register (RW) is used to control the operations and report the
@@ -394,7 +599,7 @@ status of the fault-queue.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits  |Field |Attribute | Description
 |0     |`fqen`|RO        | The fault-queue enable bit enables the fault-queue 
@@ -459,88 +664,7 @@ status of the fault-queue.
 |31:28 |Custom|          | These bits are reserved for custom use.
 |===
 
-=== Page-request-queue base (`pqb`)
-
-This 64-bits register (RW) holds the PPN of the root page of the 
-page-request-queue and number of entries in the queue.
-
-.Page-Request-queue base register fields
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 5, name: 'LOG2SZ-1'},
-  {bits: 44, name: 'PPN'},
-  {bits: 15, name: 'WPRI'},
-], config:{lanes: 2, hspace:1024}}
-....
-
-[width=100%]
-[%header, cols="1,1,1,6"]
-|===
-|Bits  |Field     |Attribute | Description
-|4:0   |`LOG2SZ-1`|WARL      | The `LOG2SZ-1` field holds the number of entries 
-                               in page-request-queue as a log-to-base-2 minus 1.
-                               A value of 0 indicates a queue of 2 entries. 
-                               Each page-request is 16-bytes. If the 
-                               page-request-queue has 256 or fewer entries 
-                               then the base address of the queue is always 
-                               aligned to 4-KiB.
-                               If the page-request-queue has more than 256 
-                               entries then the page-request-queue base address
-                               must be naturally aligned to `2^LOG2SZ^ x 16`.
-|48:5  |`PPN`     |WARL      | Holds the `PPN` of the root page of the 
-                               in-memory page-request-queue used by IOMMU to 
-                               queue page requests.
-|63:49 |`WPRI`    |WPRI      | Reserved
-|===
-
-=== Page-request-queue head (`pqh`)
-
-This 32-bits register (RW) holds the index into the page-request-queue where
-software will fetch the next page-request.
-
-.Page-request-queue head register fields
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 32, name: 'index'},
-], config:{lanes: 1, hspace:1024}}
-....
-
-[width=100%]
-[%header, cols="1,1,1,6"]
-|===
-|Bits |Field   |Attribute | Description
-|31:0 |`index` |WARL      | Holds the `index` into the page-request-queue from 
-                            which software reads the next page request.  Only 
-                            `LOG2SZ:0` bits are writeable when the queue is 
-                            inenabled state (i.e., `pqsr.pqon == 1`).
-|===
-
-=== Page-request-queue tail (`pqt`)
-
-This 32-bits register (RO) holds the index into the page-request-queue 
-where the IOMMU writes the next page-request.
-
-.Page-request-queue tail register fields
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 32, name: 'index'},
-], config:{lanes: 1, hspace:1024}}
-....
-
-[width=100%]
-[%header, cols="1,1,1,6"]
-|===
-|Bits |Field   |Attribute | Description
-|31:0 |`index` |RO        | Holds the `index` into the page-request-queue 
-                            where IOMMU writes the next page request.
-|===
-
+[[PQCSR]]
 === Page-request-queue CSR (`pqcsr`)
 
 This 32-bits register (RW) is used to control the operations and report the
@@ -565,7 +689,7 @@ status of the page-request-queue.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits   |Field   |Attribute | Description
 |16     |`pqon`  |RO        | The page-request-enable bit enables the
@@ -668,34 +792,43 @@ status of the page-request-queue.
 |31:28 |Custom   |          | These bits are designated for custom use.
 |===
 
-=== IOMMU performance monitoring counters (`iohpmctr1-31`)
-Perrine
-
-=== IOMMU performance monitoring cycles counters (`iohpmcycles`)
-Perrine
-
-=== IOMMU performance monitoring event selection (`iohpmevt1-31`)
-Perrine
-
-=== IOMMU performance monitoring counter overflow status (`iocountovf`)
-Perrine
-
-=== IOMMU performance monitoring counter inhibit (`iocountinh`)
-Perrine
-
+[[IPSR]]
 === Interrupt pending status register (`ipsr`)
 perrine
 
+[[OVF]]
+=== IOMMU performance monitoring counter overflow status (`iocountovf`)
+Perrine
+
+[[INH]]
+=== IOMMU performance monitoring counter inhibit (`iocountinh`)
+Perrine
+
+[[CYC]]
+=== IOMMU performance monitoring cycles counters (`iohpmcycles`)
+Perrine
+
+[[CTR]]
+=== IOMMU performance monitoring counters (`iohpmctr1-31`)
+Perrine
+
+[[EVT]]
+=== IOMMU performance monitoring event selection (`iohpmevt1-31`)
+Perrine
+
+[[ICVEC]]
 === Interrupt cause to vector register (`icvec`)
 perrine
 
-=== MSI table (`msi_tbl`)
-IOMMU that supports MSI implements a MSI table that is indexed by the vector 
-from `icvec` to determine a MSI table entry. Each MSI table entry for interrupt
-vector `x` has three registers `msi_addr_x`, `msi_data_x`, and `msi_vec_ctrl_x`.
-These registers are hard wired to 0 if the IOMMU does not support MSI.
+[[MSI]]
+=== MSI configuration table (`msi_cfg_tbl`)
+IOMMU that supports MSI implements a MSI configuration table that is indexed 
+by the vector from `icvec` to determine a MSI table entry. Each MSI table 
+entry for interrupt vector `x` has three registers `msi_addr_x`, `msi_data_x`, 
+and `msi_vec_ctrl_x`. These registers are hard wired to 0 if the IOMMU does 
+not support MSI.
 
-.MSI table structure
+.MSI configuration table structure
 [width=100%]
 [%header, cols="10,10,3"]
 |===
@@ -718,7 +851,7 @@ These registers are hard wired to 0 if the IOMMU does not support MSI.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits   |Field |Attribute |Description
 |1:0    | 0    |RO     |Fixed to 0
@@ -735,7 +868,7 @@ These registers are hard wired to 0 if the IOMMU does not support MSI.
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits   |Field |Attribute |Description
 |31:0   |`data`|Holds the 4-byte MSI data
@@ -751,7 +884,7 @@ These registers are hard wired to 0 if the IOMMU does not support MSI.
 ], config:{lanes: 1, hspace:1024}}
 ....
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="^1,1,^1,6"]
 |===
 |Bits   |Field |Attribute | Description
 |0      |`M`   |RW        | When the mask bit `M` is 1, the corresponding 
@@ -759,13 +892,3 @@ These registers are hard wired to 0 if the IOMMU does not support MSI.
                             prohibited from sending the associated message.
 |15:1   |`WPRI`|WPRI      | Reserved for future use.
 |===
-
-[NOTE]
-====
-====
-
-
-
-
-
-

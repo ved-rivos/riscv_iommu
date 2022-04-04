@@ -437,6 +437,15 @@ When enable-supervisory-access (`ENSA`) is 1, transactions requesting supervisor
 privilege are allowed with this `process_id` else the transaction is treated as 
 a unsupported transaction.
 
+When `ENSA` is 1, the `IOSUM` (permit Supervisor User Memory access) bit 
+modifies the privilege with which supervisor privilege transactions access 
+virtual memory. When `IOSUM=0`, superviosr privilege transactions to pages 
+mapped with U-bit in PTE set to 1 will fault.
+
+When `ENSA` is 1, supervisor privilege trasactions that read with execute 
+intent to pages mapped with U-bit in PTE set to 1 will fault, regardless of 
+the state of `IOSUM`.
+
 .Process-context (`PC`)
 
 [wavedrom, , ]
@@ -447,9 +456,10 @@ a unsupported transaction.
   {bits: 4,  name: 'MODE',     attr: '4'},
   {bits: 1,  name: 'V',        attr: '1'},
   {bits: 1,  name: 'ENSA',     attr: '1'},
-  {bits: 42, name: 'reserved', attr: '42'},
+  {bits: 1,  name: 'IOSUM',    attr: '1'},
+  {bits: 41, name: 'reserved', attr: '42'},
   {bits: 20, name: 'PSCID',    attr: '20'},
-], config:{lanes: 4, hspace: 1024}}
+], config:{lanes: 8, hspace: 1024}}
 ....
 
 The following diagrams illustrate the PDT radix-tree. The root 
