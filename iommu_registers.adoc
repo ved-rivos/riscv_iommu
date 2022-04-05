@@ -52,7 +52,7 @@ table.
 |===
 |Offset|Name            |Size|Description
 |0     |`capability`    |8   |<<CAP, Capabilities supported by the IOMMU>>
-|8     |For custom use  |8   |For custom use
+|8     |_custom_        |8   |_For custom use_
 |16    |`ddtp`          |8   |<<DDTP, Device directory table pointer>>
 |24    |`cqb`           |8   |<<CQB, Command-queue base>>
 |32    |`cqh`           |4   |<<CQH, Command-queue head>>
@@ -74,11 +74,11 @@ table.
 |96    |`iohpmcycles`   |8   |<<CYC, Performance-monitoring cycles counter>>
 |104   |`iohpmctr1 - 31`|248 |<<CTR, Performance-monitoring event counters>>
 |352   |`iohpmevt1 - 31`|248 |<<EVT, Performance-monitoring event selector>>
-|600   |`iocntsec`      |4   |<<SEC, Counters reserved for secure mode usage>>
-|604   |Reserved`       |78  |Reserved for future use (`WPRI`)
-|682   |Custom          |78  |Reserved for custom use (`WARL`)
+|600   |`iocntconf`     |4   |<<CONF, Counters reserved for confidential mode usage>>
+|604   |Reserved        |78  |Reserved for future use (`WPRI`)
+|682   |_custom_        |78  |_Reserved for custom use (`WARL`)_
 |760   |`icvec`         |4   |<<ICVEC, Interrupt cause to vector register>>
-|768   |`msi_tbl`       |256 |<<MSI, MSI Table>>
+|768   |`msi_cfg_tbl`   |256 |<<MSI, MSI Configuration Table>>
 |1024  |Reserved        |3072|Reserved for future use (`WPRI`)
 |===
 
@@ -109,7 +109,7 @@ associated with that feature is `UNSPECIFIED`, unless otherwise specified by
 that feature.
 
 When software enables or disables a feature when the IOMMU is not OFF 
-(i.e. `ddtp.MODE == Off`) then the IOMMU behavior is `UNSPECIFIED`.
+(i.e. `ddtp.iommu_mode == Off`) then the IOMMU behavior is `UNSPECIFIED`.
 
 .capabilities register fields
 [wavedrom, , ]
@@ -176,8 +176,8 @@ When software enables or disables a feature when the IOMMU is not OFF
                                 big-endian accesses.
 |24    |`WIS`      |WARL      | IOMMU interrupts signaled as wired-interrupts
 |25    |`PMON`     |WARL      | IOMMU implements a performance-monitoring unit
-|47:26 |`reserved` |WPRI      | Reserved for standard use
-|63:48 |`custom`   |WARL      | Reserved for custom use
+|47:26 |`WPRI`     |WPRI      | Reserved for standard use
+|63:48 |_custom_   |WARL      | _Reserved for custom use_
 |===
 
 [NOTE]
@@ -215,8 +215,8 @@ an IMSIC or to a memory-resident-interrupt-file and clear the `MSI` and
 |Bits  |Field      |Attribute | Description
 |43:0  |`PPN`      |WARL      | Holds the `PPN` of the root page of the 
                                 device-directory-table.
-|58:44 |reserved   |WPRI      | Reserved for future use
-|59    |busy       |RW        | A write to `ddtp` may require the IOMMU to 
+|58:44 |`WPRI`     |WPRI      | Reserved for standard use
+|59    |`busy`     |RW        | A write to `ddtp` may require the IOMMU to 
                                 perform many operations that may not occur 
                                 synchronously to the write. When a write is 
                                 observed by the `ddtp`, the `busy` bit is set 
@@ -309,14 +309,14 @@ and number of entries in the queue.
 |48:5  |`PPN`      |WARL      | Holds the `PPN` of the root page of the 
                                 in-memory command-queue used by software to 
                                 queue commands to the IOMMU. 
-|63:49 |`WPRI`     |WPRI      | Reserved
+|63:49 |`WPRI`     |WPRI      | Reserved for standard use
 |===
 
 [[CQH]]
 === Command-queue head (`cqh`)
 
 This 32-bits register (RO) holds the index into the command-queue where 
-the IOMMU will fetch the next instruction.
+the IOMMU will fetch the next command.
 
 .Command-queue head register fields
 [wavedrom, , ]
@@ -391,7 +391,7 @@ and number of entries in the queue.
 |48:5  |`PPN`     |WARL      | Holds the `PPN` of the root page of the 
                                in-memory fault-queue used by IOMMU to queue 
                                fault record.
-|63:49 |`WPRI`    |WPRI      | Reserved
+|63:49 |`WPRI`   |WPRI       | Reserved for standard use
 |===
 
 [[FQH]]
@@ -476,7 +476,7 @@ page-request-queue and number of entries in the queue.
 |48:5  |`PPN`     |WARL      | Holds the `PPN` of the root page of the 
                                in-memory page-request-queue used by IOMMU to 
                                queue page requests.
-|63:49 |`WPRI`    |WPRI      | Reserved
+|63:49 |`WPRI`    |WPRI      | Reserved for standard use
 |===
 
 [[PQH]]
@@ -501,7 +501,7 @@ software will fetch the next page-request.
 |31:0 |`index` |WARL      | Holds the `index` into the page-request-queue from 
                             which software reads the next page request.  Only 
                             `LOG2SZ:0` bits are writeable when the queue is 
-                            inenabled state (i.e., `pqsr.pqon == 1`).
+                            in enabled state (i.e., `pqsr.pqon == 1`).
 |===
 
 [[PQT]]
@@ -578,17 +578,17 @@ status of the command-queue.
 |1    |`cie`   |RW        | Command-queue-interrupt-enable bit enables 
                             generation of interrupts from command-queue when 
                             set to 1.
-|7:2  |`WPRI`  |WPRI      | Reserved
-|8    |`cqmf`  |RW1C      | If command-queue access lead to a memory fault then
+|7:2  |`WPRI`  |WPRI      | Reserved for standard use
+|8    |`cqmf`  |RW1C      | If command-queue access leads to a memory fault then
                             the command-queue-memory-fault bit is set to 1 and 
                             the command-queue stalls until this bit is cleared. 
                             When `cqmf` is set to 1, an interrupt is generated 
                             if an interrupt is not already pending 
                             (i.e., `ipsr.cip == 1`) and not masked 
                             (i.e. `cqsr.cie == 0`). To re-enable command 
-                            processing software should clear this bit by 
+                            processing, software should clear this bit by 
                             writing 1. 
-|9    |`cmd_to`|RW1C      | If the execution of an instruction leads to a 
+|9    |`cmd_to`|RW1C      | If the execution of a command leads to a 
                             timeout (e.g. a command to invalidate device ATC 
                             may timeout waiting for a completion), then the 
                             command-queue sets the `cmd_to` bit and stops 
@@ -616,7 +616,7 @@ status of the command-queue.
                             To re-enable interrupts on `IOFENCE.C` completion
                             software should clear this bit by writing 1.
                             This bit is reserved if the IOMMU uses MSI. 
-|15:12|`WPRI`   |WPRI     | Reserved
+|15:12|`WPRI`   |WPRI     | Reserved for standard use
 |16   |`cqon`   |RO       | The command-queue is active if `cqon` is 1.
                             IOMMU behavior on changing cqb when busy is 1 or 
                             `cqon` is 1 is implementation defined. The software 
@@ -641,6 +641,8 @@ status of the command-queue.
 
                             An IOMMU that can complete these operations 
                             synchronously may hardwire this bit to 0.
+|27:18 |`WPRI`|WPRI      | Reserved for standard use
+|31:28 |_custom_|        | _These bits are reserved for custom use._
 |===
 [NOTE]
 ====
@@ -697,7 +699,7 @@ status of the fault-queue.
                            records will be written to the fault-queue. 
 |1     |`fie` |RW        | Fault queue interrupt enable bit enables generation 
                            of interrupts from fault-queue when set to 1.
-|7:2   |`WPRI`|WPRI      | Reserved
+|7:2   |`WPRI`|WPRI      | Reserved for standard use
 |8     |`fqmf`|RW1C      | The `fqmf` bit is set to 1 if the IOMMU encounters 
                            an access fault when storing a fault record to the 
                            fault queue. The fault-record that was attempted to 
@@ -716,7 +718,7 @@ status of the fault-queue.
                             by writing 1 to the bit. An interrupt is generated 
                             if not already pending (i.e. `ispr.fip == 1`) and 
                             not masked (i.e. `fqsr.fie == 0`).
-|10:15 |`WPRI`|WPRI      | Reserved
+|10:15 |`WPRI`|WPRI      | Reserved for standard use
 |16    |`fqon`|RO        | The fault-queue is active if `fqon` reads 1.
                            IOMMU behavior on changing `fqb` when `busy` is 1 
                            or `pqon` is 1 implementation defined. The 
@@ -739,8 +741,8 @@ status of the fault-queue.
 
                            An IOMMU that can complete controls synchronously 
                            may hardwire this bit to 0. 
-|27:18 |`WPRI`|WPRI      | Reserved
-|31:28 |Custom|          | These bits are reserved for custom use.
+|27:18 |`WPRI`|WPRI      | Reserved for standard use
+|31:28 |_custom_|        | _These bits are reserved for custom use._
 |===
 
 [[PQCSR]]
@@ -800,7 +802,7 @@ status of the page-request-queue.
 |1      |`pie`   |RW        | The page-request-queue-interrupt-enable (`pie`) 
                               bit when set to 1, enables generation of 
                               interrupts from page request queue.
-|7:2    |`WPRI`  |WPRI      | Reserved
+|7:2    |`WPRI`  |WPRI      | Reserved for standard use
 |8      |`pqmf`  |RW1C      | The `pqmf` bit is set to 1 if the IOMMU 
                               encounters an access fault when storing a 
                               page-request message to the page-request-queue.
@@ -843,7 +845,7 @@ status of the page-request-queue.
                               received while these bits are 1 as having 
                               encountered a catastrophic error as defined by 
                               the PCIe ATS specifications
-|15:10  |`WPRI`   |WPRI     | Reserved
+|15:10  |`WPRI`   |WPRI     | Reserved for standard use
 |16     |`pqon`   |RO       | The page-request is active when `pqon` reads 1.
 
                               IOMMU behavior on changing `pqb` when `busy` is 1
@@ -867,37 +869,267 @@ status of the page-request-queue.
 
                               An IOMMU that can complete controls synchronously
                               may hardwire this bit to 0
-|18:27 |`WPRI`   |WPRI      | Reserved
-|31:28 |Custom   |          | These bits are designated for custom use.
+|27:18 |`WPRI`   |WPRI      | Reserved for standard use
+|31:28 |_custom_ |          | _These bits are designated for custom use._
 |===
 
 [[IPSR]]
 === Interrupt pending status register (`ipsr`)
-perrine
+This 32-bits register (RW1C) reports the pending interrupts which require services.
+
+.Interrupt pending status register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 1, name: 'cip'},
+  {bits: 1, name: 'fip'},
+  {bits: 1, name: 'pmip'},
+  {bits: 1, name: 'pip'},
+  {bits: 4, name: 'WPRI'},
+  {bits: 8, name: 'Custom use'},
+  {bits: 16, name: 'WPRI'},
+], config:{lanes: 2, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits   |Field   |Attribute | Description
+|0      |`cip`   |RW1C      | The command-queue-interrupt-pending (`cip`) bit indicates an interrupt is pending software service.
+                              Software should clear `cip` by writing 1 to this bit.
+|1      |`fip`   |RW1C      | The fault-queue-interrupt-pending (`fip`) bit indicates an interrupt is pending software service.
+                              Software should clear `fip` by writing 1 to this bit. 
+|2      | `pmip` |RW1C      | The performance-monitoring-interrupt-pending (`pmip`) bit indicates an interrupt is pending software
+                              service. Software should clear `pmip` by writing 1 to this bit. 
+|3      | `pip`  |RW1C      | The page-request-queue-interrupt-pending (`pip`) bit indicates an interrupt is pending software service.
+                              Software should clear `pip` by writing 1 to this bit. 	
+|7:4    |`WPRI`  |WPRI      | Reserved for standard use
+|15:8   |_custom_|          | _These bits are designated for custom use._
+|31:16  |`WPRI`  |WPRI      | Reserved for standard use
+|===
+
 
 [[OVF]]
 === Performance-monitoring counter overflow status (`iocountovf`)
-Perrine
+The performance-monitoring counter overflow status is a 32-bit read-only register that contains shadow copies of the OF bits in the `iohpmevt*` registers - where iocntovf bit X corresponds to `iohpmevtX` and the OF bit of `iohpmcycles`.
+
+This register enables overflow interrupt handler software to quickly and easily determine which counter(s) have overflowed.
+
+.iocntovf register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 32, name: 'Overflow'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits   |Field   |Attribute | Description
+|0      |`Overflow`  |RO      | Corresponds to overflow of `iohpmcycles`
+|31:1   |`Overflow`  |RO      | Corresponds to `iohpmevt*.OF`
+|===
 
 [[INH]]
 === Performance-monitoring counter inhibits (`iocountinh`)
-Perrine
+The performance-monitoring counter inhibits is a 32-bits WARL register.
+
+This register is able to inhibit selected counters from counting. Bits 31:0 inhibit counting in `iohpmctr` 31-0 respectively, where counters 0 is known by its other name of `iohpmcycles`. 
+
+.iocntinh register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 32, name: 'Inhibit'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits   |Field   |Attribute | Description
+|0      |`Inhibit`  |RW     | When set, `iohpmcycles` counter is inhibited from counting.
+|31:1   |`Inhibit`  |WARL   | When bit N is set, the associtated `iohpmctr`N is inhibited from counting.
+|===
+
+This register allows precise programming in that one can inhibit counting, program multiple counters' event configurations, then unfreeze all the counters atomically via clearing `iocntinh`. Similarly, after the execution of interest, one can inhibit counting in `iocntinh`, and then sample the counter values, without worrying about the counters counting during the counter reads.
 
 [[CYC]]
 === Performance-monitoring cycles counter (`iohpmcycles`)
-Perrine
+This 64-bits register is a free running clock cycle counter.
+There is no associtated `iohpmevt0`.
+
+.iohpmcycles register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 63, name: 'counter'},
+  {bits: 1, name: 'OF'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits   |Field    |Attribute | Description
+|62:0   |`counter`|WARL      | Cycles counter value.
+|63     |`OF`     |RW        | Overflow
+|===
+
+When `capabilities.HPM` is set, the `iohpmcycles` register must be present and be at least a 32-bits counter.
 
 [[CTR]]
 === Performance-monitoring event counters (`iohpmctr1-31`)
-Perrine
+These registers are 64-bit WARL counter registers.
+
+.iohpmctr* register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 64, name: 'counter'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits   |Field    |Attribute | Description
+|63:0   |`counter`|WARL      | Cycles counter value.
+|===
+
+When `capabilities.HPM` is set, the `iohpmctr1-7` registers must be present and be at least 32-bits counters.
+
 
 [[EVT]]
 === Performance-monitoring event selector (`iohpmevt1-31`)
-Perrine
+These performance-monitoring event registers are 64-bit RW registers.
+
+.iohpmevt* register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 15, name: 'eventID'},
+  {bits: 1, name: 'DMASK'},
+  {bits: 20, name: 'PID_PSCID'},
+  {bits: 24, name: 'DID_GSCID'},
+  {bits: 1, name: 'PV_PSCV'},
+  {bits: 1, name: 'DV_GSCV'},
+  {bits: 1, name: 'IDT'},
+  {bits: 1, name: 'OF'},
+], config:{lanes: 8, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,2,^1,6"]
+|===
+|Bits   |Field    |Attribute | Description
+|14:0   |`eventID`  |WARL    | Indicates the event to count. A value of 0 indicates no events are counted.
+                               When `eventID` is changed, including to 0, the counter retains its value.
+                               Other event IDs are implementation defined.
+|15     |`DMASK`    |WARL    | When set to 1, a partial matching of the `DID_GSCID` is performed for the transaction.
+                              The lower bits of the `DID_GSCID` all the way to the first low order 0 bit (including
+                              the 0 bit position itself) are masked.
+|35:16  |`PID_PSCID`|WARL    | process_id if `IDT` is 0, PSCID if `IDT` is 1
+| 59:36 |`DID_GSCID`|WARL    | device_id if `IDT` is 0, GSCID if `IDT` is 1.
+| 60    |`PV_PSCV`  |WARL    | If set, only transactions with matching process_id or PSCID (based on the Filter ID Type) are counted.
+| 61    |`DV_GSCV`  |WARL    | If set, only transactions with matching device_id or GSCID (based on the Filter ID Type) are counted.
+| 62    |`IDT`      |WARL    | Filter ID Type: This field indicates the type of ID to filter on. When 0, the `DID_GSCID` field holds a
+                               device_id and the `PID_PSCID` field holds a process_id. When 1, the `DID_GSCID` field holds a GSCID and `PID_PSCID` field holds a PSCID.
+| 63    |`OF`       |WARL    | Overflow status or Interrupt disable 
+|===
+
+When `capabilities.HPM` is set, the `iohpmevt1-7` registers must be present.
+
+.DMASK with IDT set to 0
+[cols="^1,3,3", options="header"]
+|===
+| *DMASK* | *DID_GSCID* | *Comment*
+| 0 | yyyyyyyy  yyyyyyyy  yyyyyyyy | One specific seg:bus:dev:func
+| 1 | yyyyyyyy  yyyyyyyy  yyyyy011 | seg:bus:dev - any func
+| 1 | yyyyyyyy  yyyyyyyy  01111111 | seg:bus - any dev:func
+| 1 | yyyyyyyy  01111111  11111111 | seg - any bus:dev:func
+|===
+
+The table below summarizes the filtering option of the counters
+
+.filtering options
+[cols="^1,1,1,5", options="header"]
+|===
+| *`IDT`* | *`DV_GSCV`* | *`PV_PSCV`* | *Operation*
+| 0/1 | 0 | 0 | Counter increments. No ID based filtering.
+| 0 |  0 | 1 | If the transaction has a valid process_id, counter increments if process_id matches `PID_PSCID`.
+| 0 |  1 | 0 | Counter incremented if device_id matches `DID_GSCID`.
+| 0 |  1 | 1 | If the transaction does not have a valid process_id, counter increments if device_id matches `DID_GSCID`.
+               If the transaction has a valid process_id, counter increments if device_id matches `DID_GSCID` and process_id matches `PID_PSCID`.
+| 1 |  0 | 1 | If the transaction has a valid process_id, counter increments if the PSCID of that process matches `PID_PSCID`.
+| 1 |  1 | 0 | Counter incremented if GSCID of the device matches `DID_GSCID`.
+| 1 |  1 | 1 | If the transaction does not have a valid process_id, counter increments if GSCID of the device matches `DID_GSCID`.
+               If the transaction has a valid process_id, counter increments if GSCID of the device matches `DID_GSCID` and PSCID of the process matches `PID_PSCID`.
+|===
+
+The `OF` bit is set when the corresponding `iohpmctr*` overflows, and remains set until written by software. Since `iohpmctr*` values are unsigned values, overflow is defined as unsigned overflow. Note that there is no loss of information after an overflow since the counter wraps around and keeps counting while the sticky OF bit remains set.
+
+If an `iohpmctr*` overflows while the associated `OF` bit is zero, then a HPM Counter Overflow interrupt is generated. If the `OF` bit is one, then no interrupt request is generated. Consequently the `OF` bit also functions as a count overflow interrupt disable for the associated `iohpmctr*`.
+
+NOTE: There are not separate overflow status and overflow interrupt enable bits. In practice, enabling overflow interrupt generation (by clearing the `OF` bit) is done in conjunction with initializing the counter to a starting value. Once a counter has overflowed, it and the `OF` bit must be reinitialized before another overflow interrupt can be generated.
+
+This HPM Counter Overflow interrupt (OR of all `iohpmctr*` overflows) is controlled and reported through `ipcsr` register.
+
+[[CONF]]
+=== Counters reserved for confidential mode usage (`iocntconf`)
+
+Reserved for future standard use.
 
 [[ICVEC]]
-=== Interrupt cause to vector register (`icvec`)
-perrine
+=== Interrupt-cause-to-vector register (`icvec`)
+
+Interrupt-cause-to-vector Register maps a cause to a vector.  All causes can be mapped to same vector or a cause can be given a unique vector. The vector is used
+
+- For MSI capable IOMMU: index into MSI configuration table (`msi_cfg_tbl`).
+- For non-MSI capable IOMMU drive a wire
+
+If an implementation only supports a single vector then all bits of this register can be made hardwired to 0 (WARL). Likewise if only two vectors are supported then only bit 0 for each cause could be RW.
+
+.icvec register fields
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 4, name: 'civ'},
+  {bits: 4, name: 'fiv'},
+  {bits: 4, name: 'pmiv'},
+  {bits: 4, name: 'piv'},
+  {bits: 16, name: 'WPRI'},
+  {bits: 32, name: 'Custom'},
+], config:{lanes: 4, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,1,^1,6"]
+|===
+|Bits   |Field    |Attribute | Description
+| 3:0   |`civ`    |WARL      | The command-queue-interrupt-vector (`civ`) bit the vector number assigned to the 
+                               command-queue-interrupt. The vector number is used to index into the MSI table for a MSI capable IOMMU to determine the MSI to generate. The vector number determines the wires to use to signal interrupt for a wired interrupt based IOMMU. 
+| 7:4   |`fiv`    |WARL      | The fault-queue-interrupt-vector (`fiv`) bit the vector number assigned to the fault-queue-interrupt.
+                               The vector number is used to index into the MSI table for a MSI capable IOMMU to determine the MSI to generate. The vector number determines the wires to use to signal interrupt for a wired interrupt based IOMMU. 
+| 11:8  |`pmiv`   |WARL      | The performance-monitoring-interrupt-vector (`pmiv`) bit the vector number assigned to the
+                               performance-monitoring-interrupt. The vector number is used to index into the MSI table for a MSI capable IOMMU to determine the MSI to generate. The vector number determines the wires to use to signal interrupt for a wired interrupt based IOMMU. 
+| 15:12 |`piv`    |WARL      | The page-request-queue-interrupt-vector (`piv`) bit the vector number assigned to the
+                               page-request-queue-interrupt. The vector number is used to index into the MSI table for a MSI capable IOMMU to determine the MSI to generate. The vector number determines the wires to use to signal interrupt for a wired interrupt based IOMMU. 	
+| 31:16 |`WPRI`   |WPRI      | Reserved for standard use
+| 63:32 |_custom_ |WARL      | _Reserved for custom use_
+|===
+
+NOTE: This register is hardwired to 0 if a single wire interrupt is used.
+
 
 [[MSI]]
 === MSI configuration table (`msi_cfg_tbl`)
@@ -935,6 +1167,7 @@ not support MSI.
 |Bits   |Field |Attribute |Description
 |1:0    | 0    |RO     |Fixed to 0
 |55:2   |`ADDR`|WARL   |Holds the 4-byte aligned MSI address.
+|63:56  |`WPRI`|WPRI   | Reserved for future use.
 |===
 
 
@@ -950,7 +1183,7 @@ not support MSI.
 [%header, cols="^1,1,^1,6"]
 |===
 |Bits   |Field |Attribute |Description
-|31:0   |`data`|Holds the 4-byte MSI data
+|31:0   |`data`| RW       | Holds the 4-byte MSI data
 |===
 
 
@@ -969,5 +1202,5 @@ not support MSI.
 |0      |`M`   |RW        | When the mask bit `M` is 1, the corresponding 
                             interrupt vector is masked and the IOMMU is 
                             prohibited from sending the associated message.
-|15:1   |`WPRI`|WPRI      | Reserved for future use.
+|31:1   |`WPRI`|WPRI      | Reserved for future use.
 |===
