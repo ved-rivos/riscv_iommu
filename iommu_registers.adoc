@@ -116,17 +116,12 @@ When software enables or disables a feature when the IOMMU is not OFF
 ....
 {reg: [
   {bits: 8, name: 'version'},
-  {bits: 1, name: 'Sv32'},
-  {bits: 1, name: 'Sv39'},
-  {bits: 1, name: 'Sv48'},
-  {bits: 1, name: 'Sv57'},
-  {bits: 1, name: '4xSv32'},
-  {bits: 1, name: '4xSv39'},
-  {bits: 1, name: '4xSv48'},
-  {bits: 1, name: '4xSv57'},
+  {bits: 1, name: 'two_stage'},
   {bits: 1, name: 'Svnapot'},
   {bits: 1, name: 'Svpbmt'},
-  {bits: 1, name: 'MSI'},
+  {bits: 1, name: 'RV32_VMS'},
+  {bits: 4, name: 'RV64_VMS'},
+  {bits: 1, name: 'MSI_FLAT'},
   {bits: 1, name: 'MSI_MRIF'},
   {bits: 1, name: 'AMO'},
   {bits: 1, name: 'ATS'},
@@ -140,7 +135,7 @@ When software enables or disables a feature when the IOMMU is not OFF
 ....
 
 [width=100%]
-[%header, cols="1,1,1,6"]
+[%header, cols="1,1,1,5"]
 |===
 |Bits  |Field      |Attribute | Description
 |7:0   |`version`  |RO        | The `version` field holds the version of the 
@@ -150,33 +145,40 @@ When software enables or disables a feature when the IOMMU is not OFF
                                 hold the major version of the specification. 
                                 For example, an implementation that supports 
                                 version 1.0 of the specification reports 0x10.
-|8     |`Sv32`     |WARL      | Page-based 32-bit virtual-memory system
-|9     |`Sv39`     |WARL      | Page-based 39-bit virtual-memory system 
-|10    |`Sv48`     |WARL      | Page-based 48-bit virtual-memory system 
-|11    |`Sv57`     |WARL      | Page-based 57-bit virtual-memory system 
-|12    |`Sv32`     |WARL      | Page-based 34-bit virtual addressing (G-stage)
-|13    |`Sv39`     |WARL      | Page-based 39-bit virtual addressing (G-stage)
-|14    |`Sv48`     |WARL      | Page-based 48-bit virtual addressing (G-stage)
-|15    |`Sv57`     |WARL      | Page-based 57-bit virtual addressing (G-stage)
-|16    |`Svnapot`  |WARL      | NAPOT translation contiguity
-|17    |`Svpbmt`   |WARL      | Page-based memory types
-|18    |`MSI`      |WARL      | MSI address translation using Write-through 
+|8     |`two_stage`|WARL      | G-stage and two-stage translations
+|9     |`Svnapot`  |WARL      | NAPOT translation contiguity
+|10    |`Svpbmt`   |WARL      | Page-based memory types
+|11    |`RV32_VMS` |WARL      | Page-based 32-bit virtual-memory system
+|15:12 |`RV64_VMS` |WARL     a| RV64 virtual-memory system
+[%header, cols="^1,1,4"]
+!===
+                                !Value  !Name      ! Description
+                                !0      !`None`    ! No S/VS-stage translations
+                                                     or protections
+                                !8      !`Sv39`    ! Page-based 48-bit 
+                                                     virtual-memory system 
+                                !9      !`Sv48`    ! Page-based 48-bit 
+                                                     virtual-memory system 
+                                !10     !`Sv57`    ! Page-based 57-bit 
+                                                     virtual-memory system 
+!===
+|16    |`MSI_FLAT` |WARL      | MSI address translation using Write-through 
                                 mode MSI PTE
-|19    |`MSI_MRIF` |WARL      | MSI address translation using MRIF mode MSI PTE
-|20    |`AMO`      |WARL      | Atomic updates to MRIF and PTE accessed (A) 
+|17    |`MSI_MRIF` |WARL      | MSI address translation using MRIF mode MSI PTE
+|18    |`AMO`      |WARL      | Atomic updates to MRIF and PTE accessed (A) 
                                 and dirty (D) bit
-|21    |`ATS`      |WARL      | PCIe Address Translation Services (ATS) and 
+|19    |`ATS`      |WARL      | PCIe Address Translation Services (ATS) and 
                                 page-request interface (PRI)
-|22    |`T2GPA`    |WARL      | Returning guest-physical-address in ATS 
+|20    |`T2GPA`    |WARL      | Returning guest-physical-address in ATS 
                                 translation completions.
-|23    |`END`      |WARL      | When 0, IOMMU accesses to memory resident data 
+|21    |`END`      |WARL      | When 0, IOMMU accesses to memory resident data 
                                 structures (e.g. DDT, PDT, in-memory queues, 
                                 VS and G stage page tables) are performed as 
                                 little-endian accesses and when 1 as 
                                 big-endian accesses.
-|24    |`WIS`      |WARL      | IOMMU interrupts signaled as wired-interrupts
-|25    |`PMON`     |WARL      | IOMMU implements a performance-monitoring unit
-|47:26 |`reserved` |WPRI      | Reserved for standard use
+|22    |`WIS`      |WARL      | IOMMU interrupts signaled as wired-interrupts
+|23    |`PMON`     |WARL      | IOMMU implements a performance-monitoring unit
+|47:24 |`reserved` |WPRI      | Reserved for standard use
 |63:48 |`custom`   |WARL      | Reserved for custom use
 |===
 
@@ -187,12 +189,12 @@ the VS-stage page tables for fine grained control on memory accessed by guest
 controlled devices. 
 
 A hypervisor that provides such an emulated IOMMU to the guest may retain 
-control of the G-stage page tables and clear the `4xSv32`, `4xSv39`, `4xSv48`, 
-and `4xSv57` fields of the emulated `capabilities` register.
+control of the G-stage page tables and clear the `two_stage` field of the 
+emulated `capabilities` register.
 
 A hypervisor that provides such an emulated IOMMU to the guest may retain 
 control of the MSI page tables used to direct MSI to guest interrupt files in 
-an IMSIC or to a memory-resident-interrupt-file and clear the `MSI` and 
+an IMSIC or to a memory-resident-interrupt-file and clear the `MSI_FLAT` and 
 `MSI_MRIF` fields of the emulated `capabilities` register.
 ====
 
