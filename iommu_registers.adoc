@@ -318,7 +318,7 @@ and number of entries in the queue.
 === Command-queue head (`cqh`)
 
 This 32-bits register (RO) holds the index into the command-queue where 
-the IOMMU will fetch the next instruction.
+the IOMMU will fetch the next command.
 
 .Command-queue head register fields
 [wavedrom, , ]
@@ -590,7 +590,7 @@ status of the command-queue.
                             (i.e. `cqsr.cie == 0`). To re-enable command 
                             processing software should clear this bit by 
                             writing 1. 
-|9    |`cmd_to`|RW1C      | If the execution of an instruction leads to a 
+|9    |`cmd_to`|RW1C      | If the execution of an command leads to a 
                             timeout (e.g. a command to invalidate device ATC 
                             may timeout waiting for a completion), then the 
                             command-queue sets the `cmd_to` bit and stops 
