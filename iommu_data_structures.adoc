@@ -80,6 +80,35 @@ in main memory. Supporting data structures in I/O memory not required.
 DDT is upto 3-level radix tree indexed using the device directory index (DDI) 
 bits of the `device_id`. 
 
+The following diagrams illustrate the DDT radix-tree. The root device-directory
+page number is located using a memory-mapped control register called the 
+device-directory-table pointer (`ddtp`). Each non-leaf (NL) entry provides the 
+PPN of the next level device-directory-table page. The leaf device directory
+table entry holds the device-context (`DC`).
+
+.Three, two and single-level device directory
+["ditaa",shadows=false, separation=false, font=courier]
+....
+  +-------+-------+-------+      +-------+-------+   +-------+
+  |DDI[2] |DDI[1] |DDI[0] |      |DDI[1] |DDI[0] |   |DDI[0] |
+  +--+----+--+----+--+----+      +-+-----+-+-----+   +-+-----+
+     |       |       |             |       |           |
+     |  +--+ |  +--+ |  +--+       |  +--+ |  +--+     |   +--+
+     |  |  | |  |  | |  |  |       |  |  | |  |  |     |   |  |
+     |  |  | |  |  | |  +--+       |  |  | |  +--+     |   |  |
+     |  |  | |  |  | +->|DC|       |  |  | +->|DC|     |   |  |
+     |  |  | |  +--+    +--+       |  |  |    +--+     |   |  |
+     |  |  | +->|NL+-+  |  |       |  +--+    |  |     |   |  |
+     |  |  |    +--+ |  |  |       +->|NL+-+  |  |     |   +--+
+     +->+--+    |  | |  |  |          +--+ |  |  |     +-->|DC|
+        |NL+-+  |  | |  |  |          |  | |  |  |         +--+
+        +--+ |  |  | |  |  |          |  | |  |  |         |  |
+        |  | |  |  | |  |  |          |  | |  |  |         |  |
+ddtp--->+--+ +->+--+ +->+--+  ddtp--->+--+ +->+--+ ddtp--->+--+
+....
+
+==== Non-leaf DDT entry
+
 A valid (`V=1`) non-leaf DDT entry provides PPN of the next level DDT page.
 
 .Non-leaf device-directory-table entry
@@ -94,6 +123,7 @@ A valid (`V=1`) non-leaf DDT entry provides PPN of the next level DDT page.
 ], config:{lanes: 2, hspace:1024}}
 ....
 
+==== Leaf DDT entry
 The leaf DDT page is indexed by `DDI[0]` and holds the device-context (DC).
 
 In base-format the `DC` is 32-bytes.
@@ -127,33 +157,6 @@ In extended-format the `DC` is 64-bytes.
 ], config:{lanes: 8, hspace: 1024}}
 ....
 
-The following diagrams illustrate the DDT radix-tree. The root device-directory
-page number is located using a memory-mapped control register called the 
-device-directory-table pointer (`ddtp`). Each non-leaf (NL) entry provides the 
-PPN of the next level device-directory-table page. The leaf device directory
-table entry holds the device-context (`DC`).
-
-.Three, two and single-level device directory
-["ditaa",shadows=false, separation=false, font=courier]
-....
-  +-------+-------+-------+      +-------+-------+   +-------+
-  |DDI[2] |DDI[1] |DDI[0] |      |DDI[1] |DDI[0] |   |DDI[0] |
-  +--+----+--+----+--+----+      +-+-----+-+-----+   +-+-----+
-     |       |       |             |       |           |
-     |  +--+ |  +--+ |  +--+       |  +--+ |  +--+     |   +--+
-     |  |  | |  |  | |  |  |       |  |  | |  |  |     |   |  |
-     |  |  | |  |  | |  +--+       |  |  | |  +--+     |   |  |
-     |  |  | |  |  | +->|DC|       |  |  | +->|DC|     |   |  |
-     |  |  | |  +--+    +--+       |  |  |    +--+     |   |  |
-     |  |  | +->|NL+-+  |  |       |  +--+    |  |     |   |  |
-     |  |  |    +--+ |  |  |       +->|NL+-+  |  |     |   +--+
-     +->+--+    |  | |  |  |          +--+ |  |  |     +-->|DC|
-        |NL+-+  |  | |  |  |          |  | |  |  |         +--+
-        +--+ |  |  | |  |  |          |  | |  |  |         |  |
-        |  | |  |  | |  |  |          |  | |  |  |         |  |
-ddtp--->+--+ +->+--+ +->+--+  ddtp--->+--+ +->+--+ ddtp--->+--+
-....
-
 ==== Device-context fields
 ===== Translation control (`tc`)
 
@@ -171,8 +174,8 @@ ddtp--->+--+ +->+--+ +->+--+  ddtp--->+--+ +->+--+ ddtp--->+--+
 ], config:{lanes: 4, hspace: 640, fontsize: 10}}
 ....
 
-`DC` is valid if the `V` bit is 1; If it is 0, all other bits in `DC` are don't-care
-and may be freely used by software.
+`DC` is valid if the `V` bit is 1; If it is 0, all other bits in `DC` are 
+don't-care and may be freely used by software.
 
 If IOMMU supports PCIe ATS specification (see capabilities register), `EN_ATS` 
 bit is used to enable ATS transaction processing. If `EN_ATS` is set to 1, 
@@ -229,27 +232,29 @@ failure in its response to avoid the shared PRI in the device being disabled
 for all PFs/VFs.
 ====
 
-Setting disable-translation-fault - `DTF` - bit to 1 disables reporting of faults
-encountered in the address translation process. Setting `DTF` to 1 does not 
-disable error responses from being generated to the device in response to faulting 
-transactions. Setting `DTF` to 1 does not disable reporting of faults from the 
-IOMMU that are not related to the address translation process.
+Setting disable-translation-fault - `DTF` - bit to 1 disables reporting of 
+faults encountered in the address translation process. Setting `DTF` to 1 does 
+not disable error responses from being generated to the device in response to 
+faulting transactions. Setting `DTF` to 1 does not disable reporting of faults 
+from the IOMMU that are not related to the address translation process.
 
 [NOTE]
 ====
-A hypervisor may set `DTF` to 1 to disable fault reporting when it has identified 
-conditions that may lead to a flurry of errors such as due to an abnormal 
-termination of a virtual machine that may require the hypervisor to reset the device.
+A hypervisor may set `DTF` to 1 to disable fault reporting when it has 
+identified conditions that may lead to a flurry of errors such as due to an 
+abnormal termination of a virtual machine that may require the hypervisor to 
+reset the device.
 ====
 
-The 'fsc' field of 'DC' holds the context for first-stage translations. The field
-holds the pointer, to a PDT if the `PDTV` bit is 1. If the `PDTV` bit is 0, the `fsc` 
-field instead holds a pointer to a supervisor first-stage page table (i.e. `iosatp`) if 
-`iohgatp.MODE` is `BARE` and holds a pointer to a virtual-supervisor first-stage page 
-table (i.e. `iovsatp`) if `iohgatp.MODE` is not `BARE`.
+The 'fsc' field of 'DC' holds the context for first-stage translations. The 
+field holds the pointer, to a PDT if the `PDTV` bit is 1. If the `PDTV` bit is 
+0, the `fsc` field instead holds a pointer to a supervisor first-stage page 
+table (i.e. `iosatp`) if `iohgatp.MODE` is `BARE` and holds a pointer to a 
+virtual-supervisor first-stage page table (i.e. `iovsatp`) if `iohgatp.MODE` 
+is not `BARE`.
 
-The `PDTV` is expected to be set to 1 when `DC` is associated with a device that 
-supports multiple process contexts and thus generates a valid `process_id` 
+The `PDTV` is expected to be set to 1 when `DC` is associated with a device 
+that supports multiple process contexts and thus generates a valid `process_id` 
 with its memory accesses.
 
 ===== IO hypervisor guest address translation and protection (`iohgatp`)
@@ -257,16 +262,16 @@ The `iohgatp` field holds the PPN of the root second-stage page table and a
 virtual machine identified by a guest soft-context ID (`GSCID`), to facilitate 
 address-translation fences on a per-virtual-machine basis. If multiple devices
 are associated to a VM with a common second-stage page table, the hypervisor is
-expected to program the same `GSCID` in each `iohgatp`. The MODE field is used to 
-select the second-stage address translation scheme.
+expected to program the same `GSCID` in each `iohgatp`. The MODE field is used 
+to select the second-stage address translation scheme.
 
 This field controls the G-stage address translation and protection. The G-stage
-page table formats and `MODE` encodings follow the format defined by the privileged 
-specification.
+page table formats and `MODE` encodings follow the format defined by the 
+privileged specification.
 
-Implementations are not required to support all defined mode settings for iohgatp.
-The IOMMU only needs to support the modes also supported by the MMU in the 
-harts integrated into the system.
+Implementations are not required to support all defined mode settings for 
+iohgatp. The IOMMU only needs to support the modes also supported by the MMU 
+in the harts integrated into the system.
 
 .IO hypervisor guest address translation and protection (iohgatp)
 [wavedrom, , ]
@@ -281,8 +286,8 @@ harts integrated into the system.
 
 ===== First-Stage context (`fsc`)
 If `PDTV` is 0, the `fsc` field in `DC` holds the `iosatp` (when `iohgatp MODE` 
-is `BARE`) or the `iovsatp` (when `iohgatp MODE` is not `BARE`) that points to a 
-first-stage page table.
+is `BARE`) or the `iovsatp` (when `iohgatp MODE` is not `BARE`) that points to 
+a first-stage page table.
 
 .IO (Virtual)Supervisor addr. translation and prot. (vsatp/satp) field (when PDTV is 0)
 [wavedrom, , ]
@@ -294,13 +299,13 @@ first-stage page table.
 ], config:{lanes: 2, hspace: 640}}
 ....
 
-The encodings of the `iosatp`/`iovsatp` `MODE` field are as the same as the encodings
-for `MODE` field in the `satp` CSR.
+The encodings of the `iosatp`/`iovsatp` `MODE` field are as the same as the 
+encodings for `MODE` field in the `satp` CSR.
 
-When `PDTV` is 1, the `fsc` field holds the process-directory table pointer (`pdtp`).
-When the device supports multiple process contexts, selected by the `process_id`,
-the PDT is used to determine the first-stage page table and associated `PSCID`
-for virtual address translation and protection.
+When `PDTV` is 1, the `fsc` field holds the process-directory table pointer 
+(`pdtp`). When the device supports multiple process contexts, selected by the 
+`process_id`, the PDT is used to determine the first-stage page table and 
+associated `PSCID` for virtual address translation and protection.
 
 The PDT is a 1, 2, or 3-level radix tree indexed using the process directory 
 index (`PDI`) bits of the process_id. The pdtp field holds the PPN of the root
@@ -356,16 +361,17 @@ a `process_id`.
 ], config:{lanes: 2, hspace: 640}}
 ....
 
-The `PSCID` field of `ta` provides the process soft-context ID that identifies the
-address-space of the process. `PSCID` facilitates address-translation fences on 
-a per-address-space basis. The `PSCID` field in ta is used as the address-space
-ID if `PDTV` is 0 and the `iosatp`/`iovsatp` `MODE` field is not Bare.
+The `PSCID` field of `ta` provides the process soft-context ID that identifies 
+the address-space of the process. `PSCID` facilitates address-translation 
+fences on a per-address-space basis. The `PSCID` field in ta is used as the 
+address-space ID if `PDTV` is 0 and the `iosatp`/`iovsatp` `MODE` field is not 
+`Bare`.
 
 ===== MSI page table pointer (`msiptp`)
 
-The `msiptp` field holds the PPN of the root MSI page table used to direct an MSI
-to a guest interrupt file in an IMSIC. The MSI page table format is defined in
-section 9.5 of the Advanced Interrupt Architecture (AIA) specification.
+The `msiptp` field holds the PPN of the root MSI page table used to direct an 
+MSI to a guest interrupt file in an IMSIC. The MSI page table format is defined
+in section 9.5 of the Advanced Interrupt Architecture (AIA) specification.
 
 The `MODE` field is used to select the MSI address translation scheme.
 
@@ -391,76 +397,16 @@ The `MODE` field is used to select the MSI address translation scheme.
 
 ===== MSI address mask (`msi_addr_mask`) and pattern (`msi_addr_pattern`)
 
-The MSI address mask (`msi_adddr_mask`) and pattern (`msi_addr_pattern`) fields are
-used to recognize certain memory writes from the device as being MSIs. The use
-of these fields is as specified in section 9.4 of the Advanced Interrupt 
+The MSI address mask (`msi_adddr_mask`) and pattern (`msi_addr_pattern`) fields
+are used to recognize certain memory writes from the device as being MSIs. The 
+use of these fields is as specified in section 9.4 of the Advanced Interrupt 
 Architecture Specification.
 
 
 === Process-Directory-Table (PDT)
 
 The PDT is a 1, 2, or 3-level radix tree indexed using the process directory 
-index (`PDI`) bits of the `process_id`. A valid (`V`==1) non-leaf PDT entry holds 
-the PPN of the next-level PDT page.
-
-.Non-leaf process-directory-table entry
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 1,  name: 'V',        attr: '1'},
-  {bits: 11, name: 'reserved', attr: '11'},
-  {bits: 44, name: 'PPN',      attr: '44'},
-  {bits: 8,  name: 'reserved', attr: '8'},
-], config:{lanes: 2, hspace:1024}}
-....
-
-The leaf PDT page  is indexed by `PDI[0]` and holds the 16-byte process-context (`PC`).
-
-A valid (`V`=1) leaf PDT entry holds the PPN of the root page of a first-stage 
-page table and the `MODE` used to determine the first-stage address translation 
-scheme. The `MODE` field encodings are as defined for the `MODE` field in 
-`satp`/`vsatp` CSR.
-
-The software assigned process soft-context ID (`PSCID`) is used as the address 
-space ID of the process identified by the first-stage page table.
-
-When two-stage address translation is active (`iohgatp.MODE != Bare`), the PPN 
-field hold a guest PPN of the first-stage page table. When two-stage address 
-translation is active, addresses of the first-stage page table entries are 
-then converted by guest physical address translation, as controlled by the 
-`iohgatp`, into a supervisor physical address. A guest OS may thus directly edit
-the first-stage page table to limit access by the device to a subset of its memory 
-and specify permissions for the device accesses.
-
-When enable-supervisory-access (`ENSA`) is 1, transactions requesting supervisor
-privilege are allowed with this `process_id` else the transaction is treated as 
-a unsupported transaction.
-
-When `ENSA` is 1, the `IOSUM` (permit Supervisor User Memory access) bit 
-modifies the privilege with which supervisor privilege transactions access 
-virtual memory. When `IOSUM=0`, superviosr privilege transactions to pages 
-mapped with U-bit in PTE set to 1 will fault.
-
-When `ENSA` is 1, supervisor privilege trasactions that read with execute 
-intent to pages mapped with U-bit in PTE set to 1 will fault, regardless of 
-the state of `IOSUM`.
-
-.Process-context (`PC`)
-
-[wavedrom, , ]
-....
-{reg: [
-  {bits: 44, name: 'PPN',      attr: '44'},
-  {bits: 16, name: 'reserved', attr: '16'},
-  {bits: 4,  name: 'MODE',     attr: '4'},
-  {bits: 1,  name: 'V',        attr: '1'},
-  {bits: 1,  name: 'ENSA',     attr: '1'},
-  {bits: 1,  name: 'IOSUM',    attr: '1'},
-  {bits: 41, name: 'reserved', attr: '42'},
-  {bits: 20, name: 'PSCID',    attr: '20'},
-], config:{lanes: 8, hspace: 1024}}
-....
+index (`PDI`) bits of the `process_id`. 
 
 The following diagrams illustrate the PDT radix-tree. The root 
 process-directory page number is located using the process-directory-table 
@@ -487,6 +433,71 @@ process-directory table entry holds the process-context (`PC`).
         +--+ |  |  | |  |  |          |  | |  |  |         |  |
         |  | |  |  | |  |  |          |  | |  |  |         |  |
 pdtp--->+--+ +->+--+ +->+--+  pdtp--->+--+ +->+--+ pdtp--->+--+
+....
+
+
+==== Non-leaf PDT entry
+
+A valid (`V`==1) non-leaf PDT entry holds the PPN of the next-level PDT page.
+
+.Non-leaf process-directory-table entry
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 1,  name: 'V',        attr: '1'},
+  {bits: 11, name: 'reserved', attr: '11'},
+  {bits: 44, name: 'PPN',      attr: '44'},
+  {bits: 8,  name: 'reserved', attr: '8'},
+], config:{lanes: 2, hspace:1024}}
+....
+
+==== Leaf PDT entry
+The leaf PDT page  is indexed by `PDI[0]` and holds the 16-byte process-context (`PC`).
+
+A valid (`V`=1) leaf PDT entry holds the PPN of the root page of a first-stage 
+page table and the `MODE` used to determine the first-stage address translation 
+scheme. The `MODE` field encodings are as defined for the `MODE` field in 
+`satp`/`vsatp` CSR.
+
+The software assigned process soft-context ID (`PSCID`) is used as the address 
+space ID of the process identified by the first-stage page table.
+
+When two-stage address translation is active (`iohgatp.MODE != Bare`), the PPN 
+field hold a guest PPN of the first-stage page table. When two-stage address 
+translation is active, addresses of the first-stage page table entries are 
+then converted by guest physical address translation, as controlled by the 
+`iohgatp`, into a supervisor physical address. A guest OS may thus directly edit
+the first-stage page table to limit access by the device to a subset of its memory 
+and specify permissions for the device accesses.
+
+When enable-supervisory-access (`ENS`) is 1, transactions requesting supervisor
+privilege are allowed with this `process_id` else the transaction is treated as 
+a unsupported transaction.
+
+When `ENS` is 1, the `SUM` (permit Supervisor User Memory access) bit 
+modifies the privilege with which supervisor privilege transactions access 
+virtual memory. When `SUM=0`, superviosr privilege transactions to pages 
+mapped with U-bit in PTE set to 1 will fault.
+
+When `ENS` is 1, supervisor privilege trasactions that read with execute 
+intent to pages mapped with U-bit in PTE set to 1 will fault, regardless of 
+the state of `SUM`.
+
+.Process-context (`PC`)
+
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 44, name: 'PPN',      attr: '44'},
+  {bits: 16, name: 'reserved', attr: '16'},
+  {bits: 4,  name: 'MODE',     attr: '4'},
+  {bits: 1,  name: 'V',        attr: '1'},
+  {bits: 1,  name: 'ENS',     attr: '1'},
+  {bits: 1,  name: 'SUM',    attr: '1'},
+  {bits: 41, name: 'reserved', attr: '42'},
+  {bits: 20, name: 'PSCID',    attr: '20'},
+], config:{lanes: 4, hspace: 1024}}
 ....
 
 === Caching in-memory data structures

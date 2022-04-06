@@ -188,7 +188,8 @@ the VS-stage page tables for fine grained control on memory accessed by guest
 controlled devices. 
 
 A hypervisor that provides such an emulated IOMMU to the guest may retain 
-control of the G-stage page tables and clear the `two_stage` field of the emulated `capabilities` register.
+control of the G-stage page tables and clear the `two_stage` field of the 
+emulated `capabilities` register.
 
 A hypervisor that provides such an emulated IOMMU to the guest may retain 
 control of the MSI page tables used to direct MSI to guest interrupt files in 
