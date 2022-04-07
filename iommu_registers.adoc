@@ -145,17 +145,19 @@ When software enables or disables a feature when the IOMMU is not OFF
                                 hold the major version of the specification. 
                                 For example, an implementation that supports 
                                 version 1.0 of the specification reports 0x10.
-|8     |`two_stage`|WARL      | When 0, single stage only translation is supported
+|8     |`two_stage`|WARL      | When 0, S-stage only translation is supported
                                 When 1, S/VS and G-stage translations are supported
 |9     |`Svnapot`  |WARL      | NAPOT translation contiguity
 |10    |`Svpbmt`   |WARL      | Page-based memory types
 |11    |`Rv32_Mode`|WARL      | Support for page-based 32-bit virtual-memory system 
-|15:12 |`Rv64_Mode`|WARL      | Maximum paging scheme supported in Rv64: +
-                                Value 0: No Rv64 paging scheme supported + 
+|15:12 |`Rv64_Mode`|WARL      | Maximum virtual-memory size addressing supported in Rv64: +
+                                Value 0: No virtual-memory system supported +
+                                Value 1-7: Reserved for standard use +
                                 Value 8: Sv39 +
                                 Value 9: Sv48 +
                                 Value 10: Sv57 +
-                                Other values reserved
+                                Value 11-13: reserved for standard use +
+                                Value 14-15: reserved for custom use
 |16    |`MSI_FLAT` |WARL      | MSI address translation using Write-through 
                                 mode MSI PTE
 |17    |`MSI_MRIF` |WARL      | MSI address translation using MRIF mode MSI PTE
@@ -176,10 +178,16 @@ When software enables or disables a feature when the IOMMU is not OFF
 |63:48 |_custom_   |WARL      | _Reserved for custom use_
 |===
 
-When `two_stage` is 0, `Rv32` and `Rv64_Mode` give the information of which paging schemes are supported in single stage translation. For instance, if `Rv64_Mode` indicates Sv48, it means that Sv48 paging scheme is supported, it implies that Sv39 is also supported.
+When `two_stage` is 0, `Rv32_Mode` and `Rv64_Mode` give the information of
+which paging schemes are supported in single stage translation. For instance,
+if `Rv64_Mode` indicates Sv48, it means that Sv48 paging scheme is supported,
+it implies that Sv39 is also supported.
 
-When `two_stage` is 1, `Rv32` and `Rv64_Mode` give the information of which paging schemes are supported.
-For instance, if `Rv64_Mode` indicates Sv48, it means that Sv48 paging scheme is supported, it implies that Sv39 is also supported for S/VS-stage translation and that Sv48x4 and Sv39x4 are supported for G-stage translation.
+When `two_stage` is 1, `Rv32_Mode` and `Rv64_Mode` give the information of
+which paging schemes are supported. For instance, if `Rv64_Mode` indicates
+Sv48, it means that Sv48 paging scheme is supported, it implies that Sv39 is
+also supported for S/VS-stage translation and that Sv48x4 and Sv39x4 are
+supported for G-stage translation.
 
 [NOTE]
 ====
