@@ -167,7 +167,7 @@ the IOMMU. At reset, the register shall contain the IOMMU supported features.
                                 The endianness is defined in `fctrl` register.
 |29:28 |`IGS`      |RO       a| IOMMU interrupt generation support.
 
-[%header, cols="^1,1,4"]
+[%header, cols="^1,1,3"]
 !===
                                 !Value  !Name      ! Description
                                 !0      ! `MSI`    ! IOMMU supports only MSI 
@@ -284,7 +284,7 @@ When software enables or disables a feature when the IOMMU is not OFF
 |59    |`iommu_mode` |RW     a| The IOMMU may be configured to be in following
                                 modes:
 
-[%header, cols="^1,1,4"]
+[%header, cols="^1,1,3"]
 !===
                                 !Value  !Name      ! Description
                                 !0      ! `Off`    ! No inbound memory 
