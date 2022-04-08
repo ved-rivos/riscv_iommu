@@ -11,7 +11,7 @@ Software and IOMMU interact using 3 in-memory queue data structures.
   if the IOMMU supports PCIe ATS specification.
 
 .IOMMU in-memory queues
-["ditaa",shadows=false, separation=false]
+["ditaa",shadows=false, separation=false, font=courier, fontsize: 16]
 ....
             +---+---+--------------------------------+---+----+
   +-------->|.. | . |       Command Queue            | . | .. |
@@ -63,13 +63,13 @@ offsets determined by the head and the tail.
 [NOTE]
 ====
 All RISC-V IOMMU implementations are required to support in-memory queues 
-located in main memory. Supporting in-memory queues in I/O memory not required.
+located in main memory. Supporting in-memory queues in I/O memory is not required.
 ====
 
 
 === Command-Queue (CQ)
 
-Command  queue is used by software to queue commands to be executed by the 
+Command queue is used by software to queue commands to be executed by the 
 IOMMU.
 
 The PPN of the base of this in-memory queue and the size of the queue is 
@@ -100,7 +100,7 @@ fields may be used by the specific function invoked.
   {bits: 7, name: 'opcode'},
   {bits: 3, name: 'func3'},
   {bits: 118, name: 'operands'},
-], config:{lanes: 2, hspace:1024}}
+], config:{lanes: 2, hspace:1024, fontsize: 16}}
 ....
 
 ==== IOMMU Page-Table cache invalidation commands
@@ -133,12 +133,12 @@ IOTINVAL.GVMA synchronize updates to in-memory first-stage and second-stage
 page table data structures with the operation of the IOMMU and flush the 
 matching IOATC entries.
 
-The `GV` operand indicates if the guest Soft-context ID (`GSCID`) operand is valid.
-The `PSCV` operand indicates if the process soft-context ID (`PSCID`) operand is 
+The `GV` operand indicates if the Guest Soft-Context ID (`GSCID`) operand is valid.
+The `PSCV` operand indicates if the Process Soft-Context ID (`PSCID`) operand is 
 valid. Setting `PSCV` to 1 is valid only with `IOTINVAL.VMA`. The `AV` operand 
 indicates if the address (`ADDR`) operand is valid. When `GV` is 0, the translations 
-associated with the host i.e. those where the second-stage translation is not 
-active are operated on.
+associated with the host (i.e. those where the second-stage translation is not 
+active) are operated on.
 
 `IOTINVAL.VMA` guarantees that previous stores made to the first-stage page 
 tables by the harts are observed before all subsequent implicit reads from 
@@ -148,42 +148,42 @@ IOMMU to the corresponding first-stage page tables.
 
 .Table `IOTINVAL.VMA` operands and operations
 [width=75%]
-[%header, cols="3,3,20"]
+[%header, cols="3,3,3,20"]
 |===
-| `AV` | `PSCV` | Operation
-| 0    | 0      | When `GV`=1, invalidates cached information from any level of 
-                  the first-stage page table, for all VM address spaces 
-                  associated with `GSCID`. 
-                  When `GV`=0, invalidates cached information from any level of 
-                  the first-stage page table, for all host address spaces.
-| 0    | 1      | When `GV`=1, invalidates cached information from  any level of
-                  the first-stage page tables, but only for the VM address 
-                  space identified by `PSCID` and `GSCID` operand. Accesses to 
-                  global mappings are not ordered. 
-                  When `GV`=0, synchronizes updates any level of the first-stage
-                  page tables, but only for the host address space identified 
-                  by `PSCID` operand. Accesses to global mappings are not 
-                  ordered. 
-| 1    | 0      | When `GV`=1, invalidates cached information from  leaf 
-                  first-stage page table entries corresponding to the IOVA in 
-                  `ADDR`, for all VM address spaces associated with the `GSCID` 
-                  operand.
-                  When `GV`=0, invalidates cached information from leaf 
-                  first-stage page table entries corresponding to the IOVA in 
-                  `ADDR`, for all host address spaces.
-| 1    | 1      | When `GV`=1, invalidates cached information from leaf 
-                  first-stage page table entries corresponding to the IOVA in 
-                  `ADDR`, for the VM address space identified by `PSCID` and `GSCID`
-                  operand. Global mappings are not invalidated.
-                  When `GV`=0, invalidates cached information from leaf 
-                  first-stage page table entries corresponding to the IOVA in 
-                  `ADDR`, for the host address space identified by `PSCID` operand.
-                  Global mappings are not invalidated.
+|`GV`|`AV`|`PSCV`| Operation
+|0   |0   |0     | Invalidates cached information from any level of 
+                   the S-stage page table, for all host address spaces.
+|0   |0   |1     | Invalidates cached information from any level of the S-stage
+                   page tables, but only for the host address space identified 
+                   by `PSCID` operand. Accesses to global mappings are not 
+                   ordered. 
+|0   |1   |0     | Invalidates cached information from leaf 
+                   S-stage page table entries corresponding to the IOVA in 
+                   `ADDR`, for all host address spaces.
+|0   |1   |1     | Invalidates cached information from leaf 
+                   S-stage page table entries corresponding to the IOVA in 
+                   `ADDR`, for the host address space identified by `PSCID` operand.
+                   Global mappings are not invalidated.
+|1   |0   |0     | Invalidates cached information from any level of 
+                   the VS-stage page table, for all VM address spaces 
+                   associated with `GSCID`.
+|1   |0   |1     | Invalidates cached information from any level of
+                   the VS-stage page tables, but only for the VM address 
+                   space identified by `PSCID` and `GSCID` operand. Accesses to 
+                   global mappings are not ordered.
+|1   |1   |0     | Invalidates cached information from  leaf 
+                   VS-stage page table entries corresponding to the IOVA in 
+                   `ADDR`, for all VM address spaces associated with the `GSCID` 
+                   operand.
+|1   |1   |1     | Invalidates cached information from leaf 
+                   VS-stage page table entries corresponding to the IOVA in 
+                   `ADDR`, for the VM address space identified by `PSCID` and `GSCID`
+                   operand. Global mappings are not invalidated.
 |===
 
-`IOTINVAL.GVMA` guarantees that previous stores made to the second-stage page 
+`IOTINVAL.GVMA` guarantees that previous stores made to the G-stage page 
 tables are observed before all subsequent implicit reads from IOMMU to the 
-corresponding second-stage page tables. Setting `PSCV` to 1 with IOTINVAL.GVMA
+corresponding G-stage page tables. Setting `PSCV` to 1 with IOTINVAL.GVMA
 is illegal.
 
 [[IGVMA]]
@@ -192,13 +192,13 @@ is illegal.
 [width=75%]
 [%header, cols="3,3,20"]
 |===
-| `AV` | `GV`   | Operation
-| n/a  | 0      | Invalidates cached information from  any level of the 
-                  second-stage page table, for all VM address spaces.
-| 0    | 1      | Invalidates cached information from any level of the 
-                  second-stage page tables, but only for all VM address spaces
+| `GV` | `AV`   | Operation
+| 0    | n/a    | Invalidates cached information from any level of the 
+                  G-stage page table, for all VM address spaces.
+| 1    | 0      | Invalidates cached information from any level of the 
+                  G-stage page tables, but only for all VM address spaces
                   identified by the `GSCID` operand.
-| 1    | 1      | Invalidates cached information from leaf second-stage page 
+| 1    | 1      | Invalidates cached information from leaf G-stage page 
                   table entries corresponding to the guest-physical-address in
                   `ADDR` operand, for the all VM address spaces identified 
                   `GSCID` operand.
@@ -259,6 +259,15 @@ The `PID` operand is reserved for `IODIR.INVAL_DDT`.
 `IODIR.INVA_PDT` guarantees that any previous stores made by a RISC-V hart to 
 the PDT are observed before all subsequent implicit reads from IOMMU to PDT. 
 The command invalidates leaf PDT entry for the specified `PID` and `DID`. 
+
+[NOTE]
+====
+Some pointers in the Device directory or Process Directory may be guest-physical
+addresses. If G-stage page table used for these translations are modified, software
+must send the appropriate IOTINVAL command and IODIR command to the Command-queue.
+Indeed, some implementations may choose to cache the translated pointers in the 
+IOMMU directory caches. IOTINVAL has no effect on the IOMMU directory caches.
+====
 
 ==== IOMMU Command-queue Fence commands
 
@@ -334,6 +343,8 @@ command completion.
 
 ==== IOMMU MSI table cache invalidation  commands
 
+This command is supported if `capabilities.MSI_FLAT` is set.
+
 [wavedrom, , ]
 ....
 {reg: [
@@ -379,6 +390,8 @@ The `PSCV` operand is reserved and must be 0 for `IOTINVAL.MSI`.
 |===
 
 ==== IOMMU ATS commands
+
+This command is supported if `capabilities.ATS` is set.
 
 [wavedrom, , ]
 ....
@@ -481,7 +494,7 @@ The `CAUSE` is a code indicating the cause of the fault/event.
 |20    | Instruction guest page fault
 |21    | Read guest-page fault
 |23    | Write/AMO guest-page fault
-|256   | All inbound transactions disallowed (ddtp.MODE  == OFF)
+|256   | All inbound transactions disallowed (`ddtp.iommu_mode`  == OFF)
 |257   | DDT entry load access fault
 |258   | DDT entry not valid
 |259   | DDT entry misconfigured - reserved fields not 0, unsupported encodings
@@ -532,7 +545,7 @@ The IOMMU may be unable to report faults through the fault-queue due to error
 conditions such as the fault-queue being full or the IOMMU encountering access
 faults when attempting to access the queue memory. A memory-mapped fault 
 control and status register (`fqcsr`) holds information about such faults. If 
-the fault-queue full condition is detected the IOMMU sets a fault-queue full 
+the fault-queue full condition is detected the IOMMU sets a fault-queue overflow 
 (`fqof`) bit in fqcsr. If the IOMMU encounters a fault in accessing the 
 fault-queue memory, the IOMMU sets a fault-queue memory access fault (`fqmf`) 
 bit in fqcsr. While either error bits are set in fqcsr, the IOMMU discards 
