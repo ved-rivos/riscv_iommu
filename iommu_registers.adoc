@@ -51,8 +51,9 @@ table.
 [%header, cols="^3,6,^3, 18"]
 |===
 |Offset|Name            |Size|Description
-|0     |`capability`    |8   |<<CAP, Capabilities supported by the IOMMU>>
-|8     |_custom_        |8   |_For custom use_
+|0     |`capabilities`  |8   |<<CAP, Capabilities supported by the IOMMU>>
+|8     |`fctrl`         |4   |<<FCTRL, Features control>>
+|12    |_custom_        |4   |_For custom use_
 |16    |`ddtp`          |8   |<<DDTP, Device directory table pointer>>
 |24    |`cqb`           |8   |<<CQB, Command-queue base>>
 |32    |`cqh`           |4   |<<CQH, Command-queue head>>
@@ -86,50 +87,38 @@ table.
 [[CAP]]
 === IOMMU capabilities (`capabilities`)
 
-The `capabilities` is a WARL read-write register reporting features supported
+The `capabilities` register is a read-only register reporting features supported
 by the IOMMU. Each field if not clear indicates presence of that feature in 
-the IOMMU. At reset, the register shall contain the maximal supported features.
-
-This register must be readable in any implementation. An implementation may 
-allow one or more fields in the register to be writeable to support enabling
-or disabling the feature corresponding to that field.
-
-If a `capabilities` field is writeable then the corresponding feature may be 
-enabled or disabled by updating that field. If a feature `x` depends on a 
-feature `y`, then attempting to enable feature `x` but disable feature `y` 
-results in both features being disabled.
-
-An implementation may impose additional constraints on the collective setting 
-of two or more `capabilities` fields, in which case they function collectively 
-as a single WARL field. An attempt to write an unsupported combination causes 
-those bits to be set to some supported combination.
-
-When software enables an feature that was previously disabled, then all state
-associated with that feature is `UNSPECIFIED`, unless otherwise specified by 
-that feature.
-
-When software enables or disables a feature when the IOMMU is not OFF 
-(i.e. `ddtp.iommu_mode == Off`) then the IOMMU behavior is `UNSPECIFIED`.
+the IOMMU. At reset, the register shall contain the IOMMU supported features.
 
 .capabilities register fields
 [wavedrom, , ]
 ....
 {reg: [
   {bits: 8, name: 'version'},
-  {bits: 1, name: 'two_stage'},
+  {bits: 1, name: 'Sv32'},
+  {bits: 1, name: 'Sv39'},
+  {bits: 1, name: 'Sv48'},
+  {bits: 1, name: 'Sv57'},
+  {bits: 2, name: 'reserved'},
   {bits: 1, name: 'Svnapot'},
   {bits: 1, name: 'Svpbmt'},
-  {bits: 1, name: 'Rv32_Mode'},
-  {bits: 4, name: 'Rv64_Mode'},
+  {bits: 1, name: 'Sv32x4'},
+  {bits: 1, name: 'Sv39x4'},
+  {bits: 1, name: 'Sv48x4'},
+  {bits: 1, name: 'Sv57x4'},
+  {bits: 2, name: 'reserved'},
   {bits: 1, name: 'MSI_FLAT'},
   {bits: 1, name: 'MSI_MRIF'},
   {bits: 1, name: 'AMO'},
   {bits: 1, name: 'ATS'},
   {bits: 1, name: 'T2GPA'},
   {bits: 1, name: 'END'},
-  {bits: 1, name: 'WIS'},
+  {bits: 2, name: 'IGS'},
   {bits: 1, name: 'PMON'},
-  {bits: 24, name: 'reserved'},
+  {bits: 1, name: 'reserved'},
+  {bits: 6, name: 'PAS'},
+  {bits: 10, name: 'reserved'},
   {bits: 16, name: 'custom'},
 ], config:{lanes: 8, hspace:1024}}
 ....
@@ -145,49 +134,60 @@ When software enables or disables a feature when the IOMMU is not OFF
                                 hold the major version of the specification. 
                                 For example, an implementation that supports 
                                 version 1.0 of the specification reports 0x10.
-|8     |`two_stage`|WARL      | When 0, S-stage only translation is supported
-                                When 1, S/VS and G-stage translations are supported
-|9     |`Svnapot`  |WARL      | NAPOT translation contiguity
-|10    |`Svpbmt`   |WARL      | Page-based memory types
-|11    |`Rv32_Mode`|WARL      | Support for page-based 32-bit virtual-memory system 
-|15:12 |`Rv64_Mode`|WARL      | Maximum virtual-memory size addressing supported in Rv64: +
-                                Value 0: No virtual-memory system supported +
-                                Value 1-7: Reserved for standard use +
-                                Value 8: Sv39 +
-                                Value 9: Sv48 +
-                                Value 10: Sv57 +
-                                Value 11-13: reserved for standard use +
-                                Value 14-15: reserved for custom use
-|16    |`MSI_FLAT` |WARL      | MSI address translation using Write-through 
+|8     |`Sv32`     |RO        | Page-based 32-bit virtual addressing is supported
+|9     |`Sv39`     |RO        | Page-based 39-bit virtual addressing is supported
+|10    |`Sv48`     |RO        | Page-based 48-bit virtual addressing is supported +
+                                When `Sv48` field is set, `Sv39` field must be set.
+|11    |`Sv57`     |RO        | Page-based 57-bit virtual addressing is supported +
+                                When `Sv57` field is set, `Sv48` field must be set.
+|13:12 | reserved  |RO        | Reserved for standard use
+|14    |`Svnapot`  |RO        | NAPOT translation contiguity
+|15    |`Svpbmt`   |RO        | Page-based memory types
+|16    |`Sv32x4`   |RO        | Page-based 34-bit virtual addressing for G-stage
+                                translation is supported
+|17    |`Sv39x4`   |RO        | Page-based 41-bit virtual addressing for G-stage
+                                translation is supported
+|18    |`Sv48x4`   |RO        | Page-based 50-bit virtual addressing for G-stage
+                                translation is supported
+|19    |`Sv57x4`   |RO        | Page-based 59-bit virtual addressing for G-stage
+                                translation is supported
+|21:20 | reserved  |RO        | Reserved for standard use
+|22    |`MSI_FLAT` |RO        | MSI address translation using Write-through 
                                 mode MSI PTE
-|17    |`MSI_MRIF` |WARL      | MSI address translation using MRIF mode MSI PTE
-|18    |`AMO`      |WARL      | Atomic updates to MRIF and PTE accessed (A) 
+|23    |`MSI_MRIF` |RO        | MSI address translation using MRIF mode MSI PTE
+|24    |`AMO`      |RO        | Atomic updates to MRIF and PTE accessed (A) 
                                 and dirty (D) bit
-|19    |`ATS`      |WARL      | PCIe Address Translation Services (ATS) and 
+|25    |`ATS`      |RO        | PCIe Address Translation Services (ATS) and 
                                 page-request interface (PRI)
-|20    |`T2GPA`    |WARL      | Returning guest-physical-address in ATS 
+|26    |`T2GPA`    |RO        | Returning guest-physical-address in ATS 
                                 translation completions.
-|21    |`END`      |WARL      | When 0, IOMMU accesses to memory resident data 
-                                structures (e.g. DDT, PDT, in-memory queues, 
-                                VS and G stage page tables) are performed as 
-                                little-endian accesses and when 1 as 
-                                big-endian accesses.
-|22    |`WIS`      |WARL      | IOMMU interrupts signaled as wired-interrupts
-|23    |`PMON`     |WARL      | IOMMU implements a performance-monitoring unit
-|47:24 |`WPRI`     |WPRI      | Reserved for standard use
-|63:48 |_custom_   |WARL      | _Reserved for custom use_
+|27    |`END`      |RO        | When 0, IOMMU supports one endianness (either little
+                                or big). +
+                                When 1, IOMMU supports both endianness. +
+                                The endianness is defined in `fctrl` register.
+|29:28 |`IGS`      |RO       a| IOMMU interrupt generation support.
+
+[%header, cols="^1,1,4"]
+!===
+                                !Value  !Name      ! Description
+                                !0      ! `MSI`    ! IOMMU supports only MSI 
+                                                     generation.
+                                !1      ! `WIS`    ! IOMMU supports only wire
+                                                     interrupt generation.
+                                !2      ! `BOTH`   ! IOMMU supports both MSI 
+                                                     and wire interrupt generation.
+                                                     The interrupt generation method
+                                                     must be defined in `fctrl`
+                                                     register.
+                                !3      ! 0        ! Reserved for standard use
+!===
+
+|30    |`PMON`     |RO        | IOMMU implements a performance-monitoring unit
+|31    | reserved  |RO        | Reserved for standard use
+|37:32 |`PAS`      |RO        | Physical Address Size (value between 32 and 56)
+|47:38 | reserved  |RO        | Reserved for standard use
+|63:48 |_custom_   |RO        | _Reserved for custom use_
 |===
-
-When `two_stage` is 0, `Rv32_Mode` and `Rv64_Mode` give the information of
-which paging schemes are supported in single stage translation. For instance,
-if `Rv64_Mode` indicates Sv48, it means that Sv48 paging scheme is supported,
-it implies that Sv39 is also supported.
-
-When `two_stage` is 1, `Rv32_Mode` and `Rv64_Mode` give the information of
-which paging schemes are supported. For instance, if `Rv64_Mode` indicates
-Sv48, it means that Sv48 paging scheme is supported, it implies that Sv39 is
-also supported for S/VS-stage translation and that Sv48x4 and Sv39x4 are
-supported for G-stage translation.
 
 [NOTE]
 ====
@@ -196,7 +196,7 @@ the VS-stage page tables for fine grained control on memory accessed by guest
 controlled devices. 
 
 A hypervisor that provides such an emulated IOMMU to the guest may retain 
-control of the G-stage page tables and clear the `two_stage` field of the 
+control of the G-stage page tables and clear the `SvNx4` fields of the 
 emulated `capabilities` register.
 
 A hypervisor that provides such an emulated IOMMU to the guest may retain 
@@ -204,6 +204,44 @@ control of the MSI page tables used to direct MSI to guest interrupt files in
 an IMSIC or to a memory-resident-interrupt-file and clear the `MSI_FLAT` and 
 `MSI_MRIF` fields of the emulated `capabilities` register.
 ====
+
+[[FCTRL]]
+=== Features-control register (`fctrl`)
+
+This register must be readable in any implementation. An implementation may 
+allow one or more fields in the register to be writeable to support enabling
+or disabling the feature corresponding to that field.
+
+If a `fctrl` field is writeable then the corresponding feature may be 
+enabled or disabled by updating that field.
+
+When software enables or disables a feature when the IOMMU is not OFF 
+(i.e. `ddtp.iommu_mode == Off`) then the IOMMU behavior is `UNSPECIFIED`.
+
+.Features-control register fields
+[wavedrom, , ]
+....
+{reg: [
+  {bits: 1, name: 'END'},
+  {bits: 1, name: 'WIS'},
+  {bits: 14,  name: 'reserved'},
+  {bits: 16,  name: 'custom'},
+], config:{lanes: 1, hspace:1024}}
+....
+
+[width=100%]
+[%header, cols="^1,2,^1,5"]
+|===
+|Bits  |Field      |Attribute | Description
+|0     |`END`      |WARL      | When 0, IOMMU accesses to memory resident data 
+                                structures (e.g. DDT, PDT, in-memory queues, 
+                                S/VS and G stage page tables) are performed as 
+                                little-endian accesses and when 1 as 
+                                big-endian accesses.
+|1     |`WIS`      |WARL      | IOMMU interrupts signaled as wired-interrupts.
+|15:2  |`WPRI`     |WPRI      | Reserved for standard use
+|31:16 |_custom_   |          | _These bits are reserved for custom use._
+|===
 
 [[DDTP]]
 === Device-directory-table pointer (`ddtp`)
@@ -265,7 +303,7 @@ an IMSIC or to a memory-resident-interrupt-file and clear the `MSI_FLAT` and
 !===
 |===
 
-The device-context is 64-bytes in size if `capability.MSI_FLAT` is 1 else it is 
+The device-context is 64-bytes in size if `capabilities.MSI_FLAT` is 1 else it is 
 32-bytes.
 
 When the 'iommu_mode' is 'Bare' or `Off`, the `PPN` field is don't-care.
