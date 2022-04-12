@@ -971,7 +971,8 @@ determine which counter(s) have overflowed.
 [wavedrom, , ]
 ....
 {reg: [
-  {bits: 32, name: 'Overflow'},
+  {bits:  1, name: 'CY'},
+  {bits: 31, name: 'HPM'},
 ], config:{lanes: 1, hspace:1024}}
 ....
 
@@ -1031,7 +1032,7 @@ There is no associtated `iohpmevt0`.
 {reg: [
   {bits: 63, name: 'counter'},
   {bits: 1, name: 'OF'},
-], config:{lanes: 1, hspace:1024}}
+], config:{lanes: 2, hspace:1024}}
 ....
 
 [width=100%]
@@ -1227,10 +1228,13 @@ Reserved for future standard use.
 Interrupt-cause-to-vector register maps a cause to a vector.  All causes can 
 be mapped to same vector or a cause can be given a unique vector. 
 
-The vector is used to:
-- For MSI capable IOMMU: index into MSI configuration table (`msi_cfg_tbl`)
-  to determine the MSI to generate.
-- For non-MSI capable IOMMU determine the wire to use to signal the interrupt
+The vector is used:
+
+. By a MSI capable IOMMU to index into MSI configuration table (`msi_cfg_tbl`)
+  to determine the MSI to generate. A IOMMU is capable of generating IOMMU
+  generated interrupt as a MSI if `capabilities.IGS==MSI` or if 
+  `capabilities.IGS==BOTH` and `fctrl.WIS` is set to 1.
+. By a non-MSI capable IOMMU determine the wire to use to signal the interrupt
 
 If an implementation only supports a single vector then all bits of this
 register may be hardwired to 0 (WARL). Likewise if only two vectors are 
