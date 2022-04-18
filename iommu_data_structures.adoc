@@ -1,7 +1,7 @@
 == Data Structures
 A data structure called device-context (DC) is used by the IOMMU to associate 
 a device with an address space and to hold other per-device parameters used 
-by IOMMU to perform address translations. A radix-tree data structure called
+by the IOMMU to perform address translations. A radix-tree data structure called
 device directory table (DDT) traversed using the `device_id` is used to hold
 the DC. 
 
@@ -15,7 +15,7 @@ Two formats of the device-context structure are supported:
   and extends the base device context with additional information for 
   processing MSIs.
 
-DC associates the device, identified by `device_id`,  with an 
+DC associates the device, identified by `device_id`,  with a
 guest-physical-address space by providing a pointer to a G-stage page 
 table and a virtual machine identifier called the guest soft-context ID 
 (`GSCID`). 
