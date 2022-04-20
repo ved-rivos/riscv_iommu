@@ -3,7 +3,7 @@
 This RISC-V specification has been contributed to directly or indirectly by:
 
 [%hardbreaks]
-* Daniel Gracia Perez (daniel.gracia-perez@thalesgroup.com)
+* Daniel Gracia Pérez (daniel.gracia-perez@thalesgroup.com)
 * Perrine Peresse (perrine.peresse@sifive.com)
 * Rieul Ducousso (rieul.ducousso@thalesgroup.com)
 * Vedvyas Shanbhogue (ved@rivosinc.com)
