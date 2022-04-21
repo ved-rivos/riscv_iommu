@@ -410,7 +410,7 @@ index (`PDI`) bits of the `process_id`.
 
 The following diagrams illustrate the PDT radix-tree. The root
 process-directory page number is located using the process-directory-table
-pointer (`pdtp`) field of the device-context. Each non-leaf (NL) entry provides
+pointer (`pdtp`) field of the device-context. Each non-leaf (`NL`) entry provides
 the PPN of the next level process-directory-table page. The leaf
 process-directory table entry holds the process-context (`PC`).
 
@@ -438,7 +438,7 @@ pdtp--->+--+ +->+--+ +->+--+  pdtp--->+--+ +->+--+ pdtp--->+--+
 
 ==== Non-leaf PDT entry
 
-A valid (`V`==1) non-leaf PDT entry holds the PPN of the next-level PDT page.
+A valid (`V==1`) non-leaf PDT entry holds the PPN of the next-level PDT page.
 
 .Non-leaf process-directory-table entry
 
@@ -455,7 +455,7 @@ A valid (`V`==1) non-leaf PDT entry holds the PPN of the next-level PDT page.
 ==== Leaf PDT entry
 The leaf PDT page  is indexed by `PDI[0]` and holds the 16-byte process-context (`PC`).
 
-.process-context
+.Process-context
 
 [wavedrom, , ]
 ....
@@ -481,20 +481,20 @@ The leaf PDT page  is indexed by `PDI[0]` and holds the 16-byte process-context 
 ], config:{lanes: 2, hspace: 1024, fontsize: 16}}
 ....
 
-`PC` is valid if the `V` bit is 1; If it is 0, all other bits in `PC` are don't
+`PC` is valid if the `V` bit is 1; if it is 0, all other bits in `PC` are don't
 care and may be freely used by software.
 
 When Enable-Supervisory-access (`ENS`) is 1, transactions requesting supervisor
 privilege are allowed with this `process_id` else the transaction is treated as
-a unsupported transaction.
+an unsupported transaction.
 
 When `ENS` is 1, the `SUM` (permit Supervisor User Memory access) bit
 modifies the privilege with which supervisor privilege transactions access
-virtual memory. When `SUM=0`, supervisor privilege transactions to pages
-mapped with U-bit in PTE set to 1 will fault.
+virtual memory. When `SUM` is 0, supervisor privilege transactions to pages
+mapped with `U`-bit in PTE set to 1 will fault.
 
 When `ENS` is 1, supervisor privilege transactions that read with execute
-intent to pages mapped with U-bit in PTE set to 1 will fault, regardless of
+intent to pages mapped with `U`-bit in PTE set to 1 will fault, regardless of
 the state of `SUM`.
 
 ===== First-Stage context (`fsc`)
