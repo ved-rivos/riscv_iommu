@@ -498,7 +498,7 @@ intent to pages mapped with `U`-bit in PTE set to 1 will fault, regardless of
 the state of `SUM`.
 
 ===== First-Stage context (`fsc`)
-If `PDTV` is 0, the `fsc` field in `DC` holds the `iosatp` (when `iohgatp MODE`
+If `PDTV` is 0, the `fsc` field in `PC` holds the `iosatp` (when `iohgatp MODE`
 is `Bare`) or the `iovsatp` (when `iohgatp MODE` is not `Bare`) that points to
 a S-stage page table or VS-stage page table respectively.
 
@@ -512,15 +512,15 @@ a S-stage page table or VS-stage page table respectively.
 ], config:{lanes: 2, hspace: 1024, fontsize: 16}}
 ....
 
-A valid (`V`=1) leaf PDT entry holds the PPN of the root page of a first-stage
+A valid (`V==1`) leaf PDT entry holds the PPN of the root page of a first-stage
 page table and the `MODE` used to determine the first-stage address translation
-scheme. The `MODE` field encodings are as defined for the `MODE` field in
+scheme. The `MODE` field encodings are as defined for the `MODE` field in the
 `satp`/`vsatp` CSR.
 
 The software assigned process soft-context ID (`PSCID`) is used as the address
 space ID of the process identified by the first-stage page table.
 
-When two-stage address translation is active (`iohgatp.MODE != Bare`), the PPN
+When two-stage address translation is active (`iohgatp MODE` is not `Bare`), the `PPN`
 field holds a guest PPN of the first-stage page table. When two-stage address
 translation is active, addresses of the first-stage page table entries are
 then converted by guest physical address translation, as controlled by the
