@@ -529,7 +529,7 @@ the first-stage page table to limit access by the device to a subset of its memo
 and specify permissions for the device accesses.
 
 === Caching in-memory data structures
-To speed up DIrect Memory Access (DMA) translations, the IOMMU may make use of
+To speed up Direct Memory Access (DMA) translations, the IOMMU may make use of
 translation caches to hold entries from device-directory-table,
 process-directory-table, S/VS and G-stage translation tables, MSI page
 tables. These caches are collectively referred to as the IOMMU Address
@@ -539,12 +539,12 @@ These IOATC do not observe modifications to the in-memory data structures using
 explicit loads and stores by RISC-V harts or by device DMA. Software must use
 the IOMMU commands to invalidate the cached data structure entries using IOMMU
 commands to synchronize the IOMMU operations to observe updates to in-memory
-data structures. Simpler implementation may not implement IOATC for some or
-for any of the in-memory data structures. The IOMMU commands may use one or
+data structures. A simpler implementation may not implement IOATC for some or
+any of the in-memory data structures. The IOMMU commands may use one or
 more IDs to tag the cached entries to identify a specific entry or a
 group of entries.
 
-.Table Identifiers used to tag IOATC enrties
+.Identifiers used to tag IOATC entries
 [width=90%]
 [%header, cols="8,10,10"]
 |===
